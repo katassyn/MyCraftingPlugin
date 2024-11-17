@@ -1,0 +1,29 @@
+name: MyCraftingPlugin2
+version: '${project.version}'
+main: com.maks.mycraftingplugin2.Main
+api-version: '1.20'
+commands:
+  crafting:
+    description: Opens the crafting menu.
+    usage: /crafting
+    permission: mycraftingplugin.use
+    permission-message: You don't have permission to use this command.
+  editcrafting:
+    description: Opens the crafting menu editor.
+    usage: /editcrafting
+    permission: mycraftingplugin.editlayout
+    permission-message: You don't have permission to use this command.
+
+permissions:
+  mycraftingplugin.use:
+    description: Allows the player to use the crafting menu.
+    default: op
+  mycraftingplugin.add:
+    description: Allows the player to add new recipes.
+    default: op
+  mycraftingplugin.edit:
+    description: Allows the player to edit recipes.
+    default: op
+  mycraftingplugin.editlayout:
+    description: Allows the player to edit the crafting menu layout.
+    default: op

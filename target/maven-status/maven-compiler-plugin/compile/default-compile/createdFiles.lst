@@ -1,0 +1,15 @@
+com\maks\mycraftingplugin2\AddRecipeMenu.class
+com\maks\mycraftingplugin2\EditRecipeMenu.class
+com\maks\mycraftingplugin2\ItemStackSerializer.class
+com\maks\mycraftingplugin2\DifficultyMenu.class
+com\maks\mycraftingplugin2\MainMenu.class
+com\maks\mycraftingplugin2\UpgradeMenu.class
+com\maks\mycraftingplugin2\ChatListener.class
+com\maks\mycraftingplugin2\MenuListener.class
+com\maks\mycraftingplugin2\CraftingSchemeMenu.class
+com\maks\mycraftingplugin2\AddRecipeCommand.class
+com\maks\mycraftingplugin2\CraftingCommand.class
+com\maks\mycraftingplugin2\EditCraftingCommand.class
+com\maks\mycraftingplugin2\CategoryMenu.class
+com\maks\mycraftingplugin2\Main.class
+com\maks\mycraftingplugin2\TemporaryData.class
