@@ -30,7 +30,8 @@ public class Main extends JavaPlugin {
         // Rejestracja komend
         getCommand("crafting").setExecutor(new CraftingCommand());
         getCommand("editcrafting").setExecutor(new EditCraftingCommand());
-
+        getCommand("alchemy").setExecutor(new AlchemyCommand());
+        getCommand("edit_alchemy").setExecutor(new EditAlchemyCommand());
         // Rejestracja listenerów
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(), this);

@@ -70,7 +70,13 @@ public class MenuListener implements Listener {
             handleEditCategories(event, player, clickedItem, itemName);
         } else if (title.equals("Crafting Scheme")) {
             handleCraftingScheme(event, player, clickedItem, itemName);
+        }else if (title.equals("Alchemy Menu")) {
+            handleAlchemyMenuClick(player, itemName);
         }
+        else if (title.equals("Edit Alchemy Menu")) {
+            handleEditAlchemyMenuClick(player, itemName);
+        }
+
     }
 
     // Method to check if the inventory title matches our plugin's inventories
@@ -85,7 +91,9 @@ public class MenuListener implements Listener {
                 || title.equals("Edit Upgrade Levels")
                 || title.startsWith("Edit Difficulty for ")
                 || title.startsWith("Edit Category: ")
-                || title.equals("Crafting Scheme");
+                || title.equals("Crafting Scheme")
+                ||title.equals("Alchemy Menu")
+                || title.equals("Edit Alchemy Menu");
     }
     // Method to handle "Add New Recipe" and "Edit Recipe" inventories
     private void handleAddEditRecipe(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
@@ -778,6 +786,44 @@ public class MenuListener implements Listener {
 
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+    private void handleAlchemyMenuClick(Player player, String itemName) {
+        switch (itemName) {
+            case "Alchemy Shop":
+                // Otwórz CategoryMenu z kategorią "alchemy_shop"
+                CategoryMenu.open(player, "alchemy_shop", 0);
+                break;
+            case "Tonics Crafting":
+                CategoryMenu.open(player, "tonics", 0);
+                break;
+            case "Potions Crafting":
+                CategoryMenu.open(player, "potions", 0);
+                break;
+            case "Physic Crafting":
+                CategoryMenu.open(player, "physic", 0);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEditAlchemyMenuClick(Player player, String itemName) {
+        switch (itemName) {
+            case "Alchemy Shop":
+                CategoryMenu.openEditor(player, "alchemy_shop", 0);
+                break;
+            case "Tonics Crafting":
+                CategoryMenu.openEditor(player, "tonics", 0);
+                break;
+            case "Potions Crafting":
+                CategoryMenu.openEditor(player, "potions", 0);
+                break;
+            case "Physic Crafting":
+                CategoryMenu.openEditor(player, "physic", 0);
+                break;
+            default:
+                break;
         }
     }
 }

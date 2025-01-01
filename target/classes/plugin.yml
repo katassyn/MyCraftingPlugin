@@ -13,7 +13,12 @@ commands:
     usage: /editcrafting
     permission: mycraftingplugin.editlayout
     permission-message: You don't have permission to use this command.
-
+  alchemy:
+    description: "Open Alchemy menu"
+    permission: mycraftingplugin.use
+  edit_alchemy:
+    description: "Open Alchemy menu in edit mode"
+    permission: mycraftingplugin.editlayout
 permissions:
   mycraftingplugin.use:
     description: Allows the player to use the crafting menu.
