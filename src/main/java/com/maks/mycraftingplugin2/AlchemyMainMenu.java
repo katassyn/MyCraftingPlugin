@@ -18,9 +18,9 @@ public class AlchemyMainMenu {
 
         // Cztery kategorie do przeglądania
         inv.setItem(10, createMenuItem(Material.BREWING_STAND, ChatColor.GREEN + "Alchemy Shop"));
-        inv.setItem(12, createMenuItem(Material.RAIL,     ChatColor.GREEN + "Tonics Crafting"));
-        inv.setItem(14, createMenuItem(Material.POWERED_RAIL,    ChatColor.GREEN + "Potions Crafting"));
-        inv.setItem(16, createMenuItem(Material.DETECTOR_RAIL,   ChatColor.GREEN + "Physic Crafting"));
+        inv.setItem(12, createMenuItem(Material.BEEF,     ChatColor.GREEN + "Tonics Crafting"));
+        inv.setItem(14, createMenuItem(Material.MUTTON,    ChatColor.GREEN + "Potions Crafting"));
+        inv.setItem(16, createMenuItem(Material.CHICKEN,   ChatColor.GREEN + "Physic Crafting"));
 
         fillWithGlass(inv);
         player.openInventory(inv);
@@ -31,9 +31,9 @@ public class AlchemyMainMenu {
 
         // Cztery kategorie w trybie edycji
         inv.setItem(10, createMenuItem(Material.BREWING_STAND, ChatColor.GREEN + "Alchemy Shop"));
-        inv.setItem(12, createMenuItem(Material.RAIL,     ChatColor.GREEN + "Tonics Crafting"));
-        inv.setItem(14, createMenuItem(Material.POWERED_RAIL,    ChatColor.GREEN + "Potions Crafting"));
-        inv.setItem(16, createMenuItem(Material.DETECTOR_RAIL,   ChatColor.GREEN + "Physic Crafting"));
+        inv.setItem(12, createMenuItem(Material.BEEF,     ChatColor.GREEN + "Tonics Crafting"));
+        inv.setItem(14, createMenuItem(Material.MUTTON,    ChatColor.GREEN + "Potions Crafting"));
+        inv.setItem(16, createMenuItem(Material.CHICKEN,   ChatColor.GREEN + "Physic Crafting"));
 
         fillWithGlass(inv);
         player.openInventory(inv);
