@@ -96,68 +96,102 @@ public class MenuListener implements Listener {
                 || title.equals("Edit Alchemy Menu");
     }
     // Method to handle "Add New Recipe" and "Edit Recipe" inventories
-    private void handleAddEditRecipe(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
+// Klasa: MenuListener
+// Fragment kodu z metodą handleAddEditRecipe
+    private void handleAddEditRecipe(InventoryClickEvent event, Player player,
+                                     ItemStack clickedItem, String itemName, String title) {
         Inventory inv = event.getInventory();
         int slot = event.getRawSlot();
-        boolean isTopInventory = event.getView().getTopInventory() == event.getClickedInventory();
+        boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
 
         if (isTopInventory) {
-            // Allow interactions in specific slots
+            // Jeśli gracz kliknął w górną część GUI
+            // 1. Sprawdzamy, czy gracz kliknął placeholder "Required Item X" lub "Result Item".
+            if (clickedItem != null
+                    && itemName != null
+                    && (itemName.startsWith("Required Item") || itemName.equalsIgnoreCase("Result Item"))) {
+
+                // Dodatkowo sprawdzamy, czy to rodzaj szkła placeholdera
+                // (dla slotu 13 może być LIGHT_BLUE_STAINED_GLASS_PANE,
+                // dla slotów 0–9 GRAY_STAINED_GLASS_PANE, itp.)
+                Material mat = clickedItem.getType();
+                if (mat == Material.GRAY_STAINED_GLASS_PANE || mat == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+                    // Usuwamy placeholder ze slotu
+                    inv.setItem(slot, null);
+                    // Nie pozwalamy przenieść do eq
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+
+            // 2. Jeśli to sloty 0–9 (wymagane przedmioty) lub slot 13 (przedmiot wynikowy),
+            //    pozwalamy wstawić tam dowolny item z eq gracza.
             if ((slot >= 0 && slot <= 9) || slot == 13) {
-                event.setCancelled(false); // Allow item movement
+                event.setCancelled(false);
             } else {
-                // Handle buttons and other interactions
+                // 3. Obsługa przycisków (success_chance, cost, save, delete, back, itd.)
                 if (itemName == null) return;
 
-                if (slot == 20) {
-                    // Set success chance
-                    // Save GUI state before closing
-                    AddRecipeMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                switch (slot) {
+                    case 20:
+                        // Set success chance
+                        AddRecipeMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                        ChatListener.setPlayerState(player.getUniqueId(), "entering_success_chance");
+                        player.sendMessage(ChatColor.YELLOW + "Please enter the success chance (e.g., 55% or 0.5%):");
+                        player.closeInventory();
+                        break;
 
-                    ChatListener.setPlayerState(player.getUniqueId(), "entering_success_chance");
-                    player.sendMessage(ChatColor.YELLOW + "Please enter the success chance (e.g., 55% or 0.5%):");
-                    player.closeInventory();
-                } else if (slot == 21) {
-                    // Set cost
-                    // Save GUI state before closing
-                    AddRecipeMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                    case 21:
+                        // Set cost
+                        AddRecipeMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                        ChatListener.setPlayerState(player.getUniqueId(), "entering_cost");
+                        player.sendMessage(ChatColor.YELLOW + "Please enter the cost (e.g., 500, 500k, 1kk):");
+                        player.closeInventory();
+                        break;
 
-                    ChatListener.setPlayerState(player.getUniqueId(), "entering_cost");
-                    player.sendMessage(ChatColor.YELLOW + "Please enter the cost (e.g., 500, 500k, 1kk):");
-                    player.closeInventory();
-                } else if (slot == 22) {
-                    // Save recipe
-                    if (itemName.equals("Save")) {
-                        if (title.equals("Add New Recipe")) {
-                            saveRecipe(player, inv);
-                            AddRecipeMenu.removeCategory(player.getUniqueId());
-                        } else if (title.equals("Edit Recipe")) {
-                            updateRecipe(player, inv);
+                    case 22:
+                        // "Save"
+                        if (itemName.equals("Save")) {
+                            if (title.equals("Add New Recipe")) {
+                                saveRecipe(player, inv);
+                                AddRecipeMenu.removeCategory(player.getUniqueId());
+                            } else if (title.equals("Edit Recipe")) {
+                                updateRecipe(player, inv);
+                                EditRecipeMenu.removeRecipeId(player.getUniqueId());
+                            }
+                        }
+                        break;
+
+                    case 23:
+                        // "Delete" (tylko w Edit Recipe)
+                        if (title.equals("Edit Recipe") && itemName.equals("Delete")) {
+                            deleteRecipe(player);
                             EditRecipeMenu.removeRecipeId(player.getUniqueId());
                         }
-                    }
-                } else if (slot == 23 && title.equals("Edit Recipe")) {
-                    // Delete recipe
-                    deleteRecipe(player);
-                    EditRecipeMenu.removeRecipeId(player.getUniqueId());
-                } else if (slot == 24) {
-                    // Back button
-                    String category = AddRecipeMenu.getCategory(player.getUniqueId());
-                    if (category != null) {
-                        if (player.hasPermission("mycraftingplugin.edit")) {
-                            CategoryMenu.openEditor(player, category, 0);
+                        break;
+
+                    case 24:
+                        // "Back"
+                        String category = AddRecipeMenu.getCategory(player.getUniqueId());
+                        if (category != null) {
+                            if (player.hasPermission("mycraftingplugin.edit")) {
+                                CategoryMenu.openEditor(player, category, 0);
+                            } else {
+                                CategoryMenu.open(player, category, 0);
+                            }
+                            AddRecipeMenu.removeCategory(player.getUniqueId());
                         } else {
-                            CategoryMenu.open(player, category, 0);
+                            player.closeInventory();
                         }
-                        AddRecipeMenu.removeCategory(player.getUniqueId());
-                    } else {
-                        player.closeInventory();
-                    }
+                        break;
+
+                    default:
+                        break;
                 }
             }
         } else {
-            // Clicked in the player's own inventory
-            event.setCancelled(false); // Allow interaction
+            // Kliknięto w ekwipunek gracza
+            event.setCancelled(false);
         }
     }
     // Method to handle "Crafting Categories" inventory
@@ -221,110 +255,101 @@ public class MenuListener implements Listener {
             }
         }
     }
-    private void handleCategoryMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
+    // Klasa: MenuListener
+// Fragment kodu z metodą handleCategoryMenu
+    private void handleCategoryMenu(InventoryClickEvent event, Player player,
+                                    ItemStack clickedItem, String itemName, String title) {
         Inventory inv = event.getInventory();
         int slot = event.getRawSlot();
-        boolean isTopInventory = event.getView().getTopInventory() == event.getClickedInventory();
+        boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
 
         if (itemName == null) return;
-
+        // Wydobywamy nazwę kategorii z tytułu "Category: ..." lub "Edit Category: ..."
         String category = title.contains(": ") ? title.split(": ")[1] : "";
 
-        if (title.startsWith("Edit Category: ")) {
-            // Editing category
-            if (isTopInventory) {
-                // Allow moving items in slots 0-44
-                if (slot >= 0 && slot <= 44) {
-                    event.setCancelled(false);
-                }
+        // Sprawdzamy, czy jesteśmy w trybie edycji
+        boolean isEditMode = title.startsWith("Edit Category: ");
 
-                if (itemName.equals("Back")) {
-                    // Back button logic
-                    if (category.startsWith("q")) {
-                        String qLevel = category.split("_")[0];
+        if (isTopInventory) {
+            // W trybie edycji pozwalamy przenosić itemy w slotach 0–44 (layout).
+            if (isEditMode && slot >= 0 && slot <= 44) {
+                event.setCancelled(false);
+            }
+
+            if (itemName.equals("Back")) {
+                // Jeżeli to kategoria Alchemii
+                if (category.equalsIgnoreCase("alchemy_shop")
+                        || category.equalsIgnoreCase("tonics")
+                        || category.equalsIgnoreCase("potions")
+                        || category.equalsIgnoreCase("physic")) {
+
+                    // W zależności, czy to tryb edycji czy normalny
+                    if (isEditMode) {
+                        AlchemyMainMenu.openEditor(player);
+                    } else {
+                        AlchemyMainMenu.open(player);
+                    }
+                }
+                // Jeżeli to kategoria "q" (np. q1_blood itp.)
+                else if (category.startsWith("q")) {
+                    String qLevel = category.split("_")[0];
+                    if (isEditMode) {
                         DifficultyMenu.openEditor(player, qLevel);
                     } else {
+                        DifficultyMenu.open(player, qLevel);
+                    }
+                }
+                // Inne kategorie (keys, lootboxes, itd.)
+                else {
+                    if (isEditMode) {
                         MainMenu.openEditor(player);
+                    } else {
+                        MainMenu.open(player);
                     }
-                } else if (itemName.equals("Next Page")) {
-                    int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
-                    TemporaryData.setPage(player.getUniqueId(), category, currentPage + 1);
-                    CategoryMenu.openEditor(player, category, currentPage + 1);
-                } else if (itemName.equals("Previous Page")) {
-                    int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
-                    TemporaryData.setPage(player.getUniqueId(), category, currentPage - 1);
-                    CategoryMenu.openEditor(player, category, currentPage - 1);
-                } else if (itemName.equals("Add Recipe")) {
-                    if (!player.hasPermission("mycraftingplugin.add")) {
-                        player.sendMessage(ChatColor.RED + "You don't have permission to add recipes.");
-                        return;
-                    }
-                    AddRecipeMenu.open(player, category);
-                } else {
-                    // Clicked on a recipe - open edit interface
-                    ItemMeta meta = clickedItem.getItemMeta();
-                    if (meta == null || !meta.hasLore()) {
-                        player.sendMessage(ChatColor.RED + "Invalid recipe.");
-                        return;
-                    }
-
-                    List<String> lore = meta.getLore();
-                    int recipeId = -1;
-                    for (String line : lore) {
-                        if (ChatColor.stripColor(line).startsWith("Recipe ID: ")) {
-                            String idString = ChatColor.stripColor(line).replace("Recipe ID: ", "").trim();
-                            recipeId = Integer.parseInt(idString);
-                            break;
-                        }
-                    }
-
-                    if (recipeId == -1) {
-                        player.sendMessage(ChatColor.RED + "Invalid recipe.");
-                        return;
-                    }
-
-                    // Open edit recipe menu
-                    EditRecipeMenu.open(player, recipeId);
                 }
-
-                // Save new layout after moving items
-                Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
-                    saveCategoryLayout(inv, category);
-                }, 1L);
-            } else {
-                event.setCancelled(false); // Allow interaction with player's inventory
             }
-        } else {
-            // Viewing category
-            if (itemName.equals("Back")) {
-                if (category.startsWith("q")) {
-                    String qLevel = category.split("_")[0];
-                    DifficultyMenu.open(player, qLevel);
-                } else {
-                    MainMenu.open(player);
-                }
-            } else if (itemName.equals("Next Page")) {
+            else if (itemName.equals("Next Page")) {
                 int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
                 TemporaryData.setPage(player.getUniqueId(), category, currentPage + 1);
-                CategoryMenu.open(player, category, currentPage + 1);
-            } else if (itemName.equals("Previous Page")) {
+                if (isEditMode) {
+                    CategoryMenu.openEditor(player, category, currentPage + 1);
+                } else {
+                    CategoryMenu.open(player, category, currentPage + 1);
+                }
+            }
+            else if (itemName.equals("Previous Page")) {
                 int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
                 TemporaryData.setPage(player.getUniqueId(), category, currentPage - 1);
-                CategoryMenu.open(player, category, currentPage - 1);
-            } else {
-                // Clicked on a recipe - open crafting scheme
+                if (isEditMode) {
+                    CategoryMenu.openEditor(player, category, currentPage - 1);
+                } else {
+                    CategoryMenu.open(player, category, currentPage - 1);
+                }
+            }
+            else if (isEditMode && itemName.equals("Add Recipe")) {
+                // Tylko w trybie edycji
+                if (!player.hasPermission("mycraftingplugin.add")) {
+                    player.sendMessage(ChatColor.RED + "You don't have permission to add recipes.");
+                    return;
+                }
+                AddRecipeMenu.open(player, category);
+            }
+            else {
+                // Kliknięto w przedmiot (recepturę)
                 ItemMeta meta = clickedItem.getItemMeta();
                 if (meta == null || !meta.hasLore()) {
                     player.sendMessage(ChatColor.RED + "Invalid recipe.");
                     return;
                 }
 
+                // Szukamy ID receptury w lore
                 List<String> lore = meta.getLore();
                 int recipeId = -1;
                 for (String line : lore) {
-                    if (ChatColor.stripColor(line).startsWith("Recipe ID: ")) {
-                        String idString = ChatColor.stripColor(line).replace("Recipe ID: ", "").trim();
-                        recipeId = Integer.parseInt(idString);
+                    String clean = ChatColor.stripColor(line);
+                    if (clean.startsWith("Recipe ID: ")) {
+                        String idStr = clean.replace("Recipe ID: ", "").trim();
+                        recipeId = Integer.parseInt(idStr);
                         break;
                     }
                 }
@@ -334,9 +359,28 @@ public class MenuListener implements Listener {
                     return;
                 }
 
-                // Open crafting scheme
-                TemporaryData.setLastCategory(player.getUniqueId(), category);
-                CraftingSchemeMenu.open(player, clickedItem, recipeId);
+                // W zależności czy edytujemy, czy oglądamy
+                if (isEditMode) {
+                    // Otwórz menu edycji receptury
+                    EditRecipeMenu.open(player, recipeId);
+                } else {
+                    // Otwórz CraftingSchemeMenu
+                    TemporaryData.setLastCategory(player.getUniqueId(), category);
+                    CraftingSchemeMenu.open(player, clickedItem, recipeId);
+                }
+            }
+
+            // Zapisujemy layout tylko w trybie edycji (po drobnej zwłoce)
+            if (isEditMode) {
+                Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
+                    saveCategoryLayout(inv, category);
+                }, 1L);
+            }
+        } else {
+            // Kliknięto w ekwipunek gracza
+            if (isEditMode) {
+                // Zezwalamy na przesuwanie w ekwipunku gracza
+                event.setCancelled(false);
             }
         }
     }
@@ -689,9 +733,16 @@ public class MenuListener implements Listener {
 
             // ID receptury
             ps.setInt(14, recipeId);
+            Bukkit.getLogger().info("[DEBUG] updateRecipe: successChance="
+                    + TemporaryData.getSuccessChance(player.getUniqueId())
+                    + ", cost=" + TemporaryData.getCost(player.getUniqueId())
+                    + ", recipeId=" + recipeId
+            );
 
             ps.executeUpdate();
             player.sendMessage(ChatColor.GREEN + "Recipe has been updated.");
+            int updatedRows = ps.executeUpdate();
+            Bukkit.getLogger().info("[DEBUG] updatedRows: " + updatedRows);
 
             // Wyczyść dane tymczasowe
             TemporaryData.removeSuccessChance(player.getUniqueId());
