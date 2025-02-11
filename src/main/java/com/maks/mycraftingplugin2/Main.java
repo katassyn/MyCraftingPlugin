@@ -5,15 +5,16 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.Bukkit;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.configuration.file.FileConfiguration;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Main extends JavaPlugin {
 
     private static Main instance;
-    private static Connection connection;
+    private static HikariDataSource dataSource;
     private static Economy economy;
 
     @Override
@@ -32,6 +33,7 @@ public class Main extends JavaPlugin {
         getCommand("editcrafting").setExecutor(new EditCraftingCommand());
         getCommand("alchemy").setExecutor(new AlchemyCommand());
         getCommand("edit_alchemy").setExecutor(new EditAlchemyCommand());
+
         // Rejestracja listenerów
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
@@ -42,12 +44,8 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
         }
         ConsoleCommandSender console = Bukkit.getConsoleSender();
         console.sendMessage("§cMyCraftingPlugin2 has been disabled!");
@@ -57,8 +55,11 @@ public class Main extends JavaPlugin {
         return instance;
     }
 
-    public static Connection getConnection() {
-        return connection;
+    public static Connection getConnection() throws SQLException {
+        if (dataSource == null || dataSource.isClosed()) {
+            throw new SQLException("DataSource is not initialized or has been closed!");
+        }
+        return dataSource.getConnection();
     }
 
     public static Economy getEconomy() {
@@ -74,37 +75,68 @@ public class Main extends JavaPlugin {
         String username = config.getString("database.user", "root");
         String password = config.getString("database.password", "");
 
-        String url = String.format("jdbc:mysql://%s:%s/%s", host, port, database);
+        // Konfiguracja HikariCP
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(String.format("jdbc:mysql://%s:%s/%s?useSSL=false&serverTimezone=UTC", host, port, database));
+        hikariConfig.setUsername(username);
+        hikariConfig.setPassword(password);
+
+        // Ustawienia poola połączeń
+        hikariConfig.setMaximumPoolSize(10);
+        hikariConfig.setMinimumIdle(5);
+        hikariConfig.setIdleTimeout(300000); // 5 minut
+        hikariConfig.setConnectionTimeout(10000); // 10 sekund
+        hikariConfig.setMaxLifetime(1800000); // 30 minut
+        hikariConfig.setAutoCommit(true);
+
+        // Dodatkowe ustawienia MySQL
+        hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
+        hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
+        hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        hikariConfig.addDataSourceProperty("useServerPrepStmts", "true");
+        hikariConfig.addDataSourceProperty("useLocalSessionState", "true");
+        hikariConfig.addDataSourceProperty("rewriteBatchedStatements", "true");
+        hikariConfig.addDataSourceProperty("cacheResultSetMetadata", "true");
+        hikariConfig.addDataSourceProperty("cacheServerConfiguration", "true");
+        hikariConfig.addDataSourceProperty("elideSetAutoCommits", "true");
+        hikariConfig.addDataSourceProperty("maintainTimeStats", "false");
 
         try {
-            connection = DriverManager.getConnection(url, username, password);
-            getLogger().info("Connected to the database.");
+            dataSource = new HikariDataSource(hikariConfig);
+            getLogger().info("Successfully initialized HikariCP connection pool!");
 
-            // Utworzenie tabeli "recipes" jeśli nie istnieje
-            String createTable = "CREATE TABLE IF NOT EXISTS recipes ("
-                    + "id INT AUTO_INCREMENT PRIMARY KEY,"
-                    + "category VARCHAR(255),"
-                    + "slot INT,"
-                    + "required_item_1 TEXT,"
-                    + "required_item_2 TEXT,"
-                    + "required_item_3 TEXT,"
-                    + "required_item_4 TEXT,"
-                    + "required_item_5 TEXT,"
-                    + "required_item_6 TEXT,"
-                    + "required_item_7 TEXT,"
-                    + "required_item_8 TEXT,"
-                    + "required_item_9 TEXT,"
-                    + "required_item_10 TEXT,"
-                    + "result_item TEXT,"
-                    + "success_chance DOUBLE,"
-                    + "cost DOUBLE"
-                    + ");";
+            // Utworzenie tabeli recipes jeśli nie istnieje
+            try (Connection conn = getConnection();
+                 var statement = conn.createStatement()) {
 
-            connection.createStatement().executeUpdate(createTable);
+                String createTable = """
+                    CREATE TABLE IF NOT EXISTS recipes (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        category VARCHAR(255),
+                        slot INT,
+                        required_item_1 TEXT,
+                        required_item_2 TEXT,
+                        required_item_3 TEXT,
+                        required_item_4 TEXT,
+                        required_item_5 TEXT,
+                        required_item_6 TEXT,
+                        required_item_7 TEXT,
+                        required_item_8 TEXT,
+                        required_item_9 TEXT,
+                        required_item_10 TEXT,
+                        result_item TEXT,
+                        success_chance DOUBLE,
+                        cost DOUBLE
+                    )
+                """;
+
+                statement.executeUpdate(createTable);
+                getLogger().info("Successfully initialized database tables!");
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
-            getLogger().severe("Could not connect to the database!");
+            getLogger().severe("Failed to initialize database connection pool!");
         }
     }
 

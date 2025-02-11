@@ -35,32 +35,46 @@ public class ChatListener implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        // Sprawdzamy, czy gracz jest w jednym z naszych "stanów" (wprowadzania % lub kosztu).
         if (playerStates.containsKey(uuid)) {
-            event.setCancelled(true);  // Anulujemy "normalne" chatowanie
+            event.setCancelled(true);
             String state = playerStates.get(uuid);
             String message = event.getMessage();
 
-            // Za pomocą schedulera przekazujemy logikę do wątku głównego
+            Bukkit.getLogger().info("[DEBUG] onPlayerChat: state=" + state
+                    + ", rawMessage='" + message + "'");
+
+            // Przekazujemy do wątku głównego
             Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
                 if (state.equals("entering_success_chance")) {
+                    // Gracz ustawia % szansy
                     try {
                         double successChance = parsePercentage(message);
+                        Bukkit.getLogger().info("[DEBUG] onPlayerChat (successChance): after parse -> " + successChance);
+
+                        // Ustawiamy WYŁĄCZNIE successChance
                         TemporaryData.setSuccessChance(uuid, successChance);
+
                         player.sendMessage(ChatColor.GREEN + "Success chance set to " + successChance + "%.");
                     } catch (NumberFormatException e) {
-                        player.sendMessage(ChatColor.RED + "Invalid input. Please enter a valid percentage (like 50% or 50).");
+                        player.sendMessage(ChatColor.RED
+                                + "Invalid input. Please enter a valid percentage (like 50% or 50).");
                     }
                     removePlayerState(uuid);
                     reopenRecipeMenu(player);
 
                 } else if (state.equals("entering_cost")) {
+                    // Gracz ustawia koszt
                     try {
                         double cost = parseCost(message);
+                        Bukkit.getLogger().info("[DEBUG] onPlayerChat (cost): after parse -> " + cost);
+
+                        // Ustawiamy WYŁĄCZNIE cost
                         TemporaryData.setCost(uuid, cost);
+
                         player.sendMessage(ChatColor.GREEN + "Cost set to " + cost + ".");
                     } catch (NumberFormatException e) {
-                        player.sendMessage(ChatColor.RED + "Invalid input. Please enter a valid cost (like 500, 1k, 2m).");
+                        player.sendMessage(ChatColor.RED
+                                + "Invalid input. Please enter a valid cost (like 500, 1k, 2m).");
                     }
                     removePlayerState(uuid);
                     reopenRecipeMenu(player);
@@ -74,38 +88,41 @@ public class ChatListener implements Listener {
      */
     private void reopenRecipeMenu(Player player) {
         UUID uuid = player.getUniqueId();
-        // Sprawdzamy, czy mamy zapisaną kategorię AddRecipeMenu (nowa receptura)
+
+        // Sprawdzamy, czy mamy zapisaną kategorię (AddRecipeMenu)
         String category = AddRecipeMenu.getCategory(uuid);
         if (category != null) {
-            // Jeśli tak, otwieramy ponownie AddRecipeMenu
+            // Nowa receptura
             AddRecipeMenu.open(player, category);
         } else {
-            // W innym wypadku sprawdzamy, czy gracz edytuje już istniejącą recepturę
+            // Edycja już istniejącej
             int recipeId = EditRecipeMenu.getRecipeId(uuid);
             if (recipeId != -1) {
-                // Jeśli mamy ID recepty, otwieramy EditRecipeMenu
                 EditRecipeMenu.open(player, recipeId);
             }
         }
     }
 
     /**
-     * Parsujemy wpisany przez gracza procent (np. "55%", "0.5%").
-     */
-    private double parsePercentage(String input) throws NumberFormatException {
-        input = input.replace("%", "").trim(); // Usuwamy znak %
-        return Double.parseDouble(input);       // Zamieniamy na double
-    }
-
-    /**
-     * Parsujemy wpisany przez gracza koszt (np. "500", "1k", "2m").
+     * Parsujemy koszt (np. 500, 1k, 2m).
      */
     private double parseCost(String input) throws NumberFormatException {
-        // Zamień np. 1k -> 1000, 1m -> 1000000
+        Bukkit.getLogger().info("[DEBUG] parseCost: input BEFORE replace='" + input + "'");
         input = input.replace(",", "")
                 .replace("k", "000")
                 .replace("m", "000000")
                 .trim();
+        Bukkit.getLogger().info("[DEBUG] parseCost: input AFTER replace='" + input + "'");
+        return Double.parseDouble(input);
+    }
+
+    /**
+     * Parsujemy procent (np. 50%, 0.5%).
+     */
+    private double parsePercentage(String input) throws NumberFormatException {
+        Bukkit.getLogger().info("[DEBUG] parsePercentage: raw='" + input + "'");
+        input = input.replace("%", "").trim();
+        Bukkit.getLogger().info("[DEBUG] parsePercentage: after replace='" + input + "'");
         return Double.parseDouble(input);
     }
 }

@@ -134,20 +134,19 @@ public class MenuListener implements Listener {
 
                 switch (slot) {
                     case 20:
-                        // Set success chance
                         AddRecipeMenu.saveGuiState(player.getUniqueId(), inv.getContents());
                         ChatListener.setPlayerState(player.getUniqueId(), "entering_success_chance");
-                        player.sendMessage(ChatColor.YELLOW + "Please enter the success chance (e.g., 55% or 0.5%):");
+                        player.sendMessage(ChatColor.YELLOW + "Please enter the success chance (e.g. 55% or 0.5%).");
                         player.closeInventory();
                         break;
 
                     case 21:
-                        // Set cost
                         AddRecipeMenu.saveGuiState(player.getUniqueId(), inv.getContents());
                         ChatListener.setPlayerState(player.getUniqueId(), "entering_cost");
-                        player.sendMessage(ChatColor.YELLOW + "Please enter the cost (e.g., 500, 500k, 1kk):");
+                        player.sendMessage(ChatColor.YELLOW + "Please enter the cost (e.g. 500, 500k, 1kk).");
                         player.closeInventory();
                         break;
+
 
                     case 22:
                         // "Save"
@@ -417,14 +416,12 @@ public class MenuListener implements Listener {
     // Metoda performCrafting
     private void performCrafting(Player player, Inventory inv) {
         try {
-            ItemStack resultItem = inv.getItem(22); // Assuming the result item is in slot 22
-
+            ItemStack resultItem = inv.getItem(22);
             if (resultItem == null || resultItem.getType() == Material.AIR) {
                 player.sendMessage(ChatColor.RED + "Invalid recipe.");
                 return;
             }
 
-            // Retrieve the Recipe ID from the item's PersistentDataContainer
             ItemMeta meta = resultItem.getItemMeta();
             if (meta == null) {
                 player.sendMessage(ChatColor.RED + "Recipe not found.");
@@ -439,82 +436,67 @@ public class MenuListener implements Listener {
                 return;
             }
 
-            // Obtain database connection
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                player.sendMessage(ChatColor.RED + "Database connection error.");
-                return;
-            }
+            try (Connection conn = Main.getConnection();
+                 PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE id = ?")) {
 
-            // Fetch recipe details from the database
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE id = ?");
-            ps.setInt(1, recipeId);
-            ResultSet rs = ps.executeQuery();
+                ps.setInt(1, recipeId);
+                ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) {
-                // Check if the player has the required items
-                boolean hasItems = true;
-                Map<Integer, ItemStack> requiredItems = new HashMap<>();
-                for (int i = 0; i < 10; i++) {
-                    String itemData = rs.getString("required_item_" + (i + 1));
-                    if (itemData != null) {
-                        ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
-                        requiredItems.put(i, requiredItem);
-                        int requiredAmount = requiredItem.getAmount();
-
-                        int playerAmount = getTotalItemAmount(player, requiredItem);
-
-                        if (playerAmount < requiredAmount) {
-                            hasItems = false;
-                            break;
+                if (rs.next()) {
+                    // Check if the player has the required items
+                    boolean hasItems = true;
+                    Map<Integer, ItemStack> requiredItems = new HashMap<>();
+                    for (int i = 0; i < 10; i++) {
+                        String itemData = rs.getString("required_item_" + (i + 1));
+                        if (itemData != null) {
+                            ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
+                            requiredItems.put(i, requiredItem);
+                            if (getTotalItemAmount(player, requiredItem) < requiredItem.getAmount()) {
+                                hasItems = false;
+                                break;
+                            }
                         }
                     }
-                }
 
-                if (!hasItems) {
-                    player.sendMessage(ChatColor.RED + "You don't have all the required items.");
-                    return;
-                }
+                    if (!hasItems) {
+                        player.sendMessage(ChatColor.RED + "You don't have all the required items.");
+                        return;
+                    }
 
-                // Check if the player has enough money
-                double cost = rs.getDouble("cost");
-                if (Main.getEconomy().getBalance(player) < cost) {
-                    player.sendMessage(ChatColor.RED + "You don't have enough money.");
-                    return;
-                }
+                    // Check if the player has enough money
+                    double cost = rs.getDouble("cost");
+                    if (Main.getEconomy().getBalance(player) < cost) {
+                        player.sendMessage(ChatColor.RED + "You don't have enough money.");
+                        return;
+                    }
 
-                // Remove items from the player
-                for (ItemStack requiredItem : requiredItems.values()) {
-                    removeItems(player, requiredItem);
-                }
+                    // Remove items from the player
+                    for (ItemStack requiredItem : requiredItems.values()) {
+                        removeItems(player, requiredItem);
+                    }
 
-                // Deduct the cost
-                Main.getEconomy().withdrawPlayer(player, cost);
+                    // Deduct the cost
+                    Main.getEconomy().withdrawPlayer(player, cost);
 
-                // Calculate success chance
-                double successChance = rs.getDouble("success_chance");
-                if (Math.random() * 100 <= successChance) {
-                    // Success - give the item to the player
-                    player.getInventory().addItem(resultItem);
-                    player.sendMessage(ChatColor.GREEN + "Crafting successful!");
-                    player.closeInventory();
+                    // Calculate success chance
+                    double successChance = rs.getDouble("success_chance");
+                    if (Math.random() * 100 <= successChance) {
+                        // Success - give the item to the player
+                        player.getInventory().addItem(resultItem);
+                        player.sendMessage(ChatColor.GREEN + "Crafting successful!");
+                        player.closeInventory();
+                    } else {
+                        player.sendMessage(ChatColor.RED + "Crafting failed.");
+                    }
                 } else {
-                    // Failure
-                    player.sendMessage(ChatColor.RED + "Crafting failed.");
-                    // Keep the GUI open
+                    player.sendMessage(ChatColor.RED + "Recipe not found.");
                 }
-
-            } else {
-                player.sendMessage(ChatColor.RED + "Recipe not found.");
-                // Keep the GUI open
             }
-
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             player.sendMessage(ChatColor.RED + "An error occurred during crafting.");
         }
     }
-
 
 
     // Implement the removeItems method
@@ -618,23 +600,19 @@ public class MenuListener implements Listener {
 
     // Metoda saveRecipe
     private void saveRecipe(Player player, Inventory inv) {
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                player.sendMessage(ChatColor.RED + "Database connection error.");
-                return;
-            }
+        String category = AddRecipeMenu.getCategory(player.getUniqueId());
+        if (category == null) {
+            player.sendMessage(ChatColor.RED + "Category not found.");
+            return;
+        }
 
-            String category = AddRecipeMenu.getCategory(player.getUniqueId());
-
-            if (category == null) {
-                player.sendMessage(ChatColor.RED + "Category not found.");
-                return;
-            }
-
-            PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO recipes (category, required_item_1, required_item_2, required_item_3, required_item_4, required_item_5, required_item_6, required_item_7, required_item_8, required_item_9, required_item_10, result_item, success_chance, cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            );
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO recipes (category, required_item_1, required_item_2, required_item_3, " +
+                             "required_item_4, required_item_5, required_item_6, required_item_7, required_item_8, " +
+                             "required_item_9, required_item_10, result_item, success_chance, cost) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             )) {
 
             ps.setString(1, category);
 
@@ -658,12 +636,10 @@ public class MenuListener implements Listener {
             }
 
             // Szansa na sukces
-            double successChance = TemporaryData.getSuccessChance(player.getUniqueId());
-            ps.setDouble(13, successChance);
+            ps.setDouble(13, TemporaryData.getSuccessChance(player.getUniqueId()));
 
             // Koszt
-            double cost = TemporaryData.getCost(player.getUniqueId());
-            ps.setDouble(14, cost);
+            ps.setDouble(14, TemporaryData.getCost(player.getUniqueId()));
 
             ps.executeUpdate();
             player.sendMessage(ChatColor.GREEN + "Recipe has been saved.");
@@ -671,8 +647,6 @@ public class MenuListener implements Listener {
             // Wyczyść dane tymczasowe
             TemporaryData.removeSuccessChance(player.getUniqueId());
             TemporaryData.removeCost(player.getUniqueId());
-
-            // Usuń zapisany stan GUI
             AddRecipeMenu.removeGuiState(player.getUniqueId());
 
             player.closeInventory();
@@ -686,23 +660,19 @@ public class MenuListener implements Listener {
 
     // Metoda updateRecipe
     private void updateRecipe(Player player, Inventory inv) {
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                player.sendMessage(ChatColor.RED + "Database connection error.");
-                return;
-            }
+        int recipeId = EditRecipeMenu.getRecipeId(player.getUniqueId());
+        if (recipeId == -1) {
+            player.sendMessage(ChatColor.RED + "Recipe ID not found.");
+            return;
+        }
 
-            int recipeId = EditRecipeMenu.getRecipeId(player.getUniqueId());
-
-            if (recipeId == -1) {
-                player.sendMessage(ChatColor.RED + "Recipe ID not found.");
-                return;
-            }
-
-            PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE recipes SET required_item_1 = ?, required_item_2 = ?, required_item_3 = ?, required_item_4 = ?, required_item_5 = ?, required_item_6 = ?, required_item_7 = ?, required_item_8 = ?, required_item_9 = ?, required_item_10 = ?, result_item = ?, success_chance = ?, cost = ? WHERE id = ?"
-            );
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE recipes SET required_item_1=?, required_item_2=?, required_item_3=?, " +
+                             "required_item_4=?, required_item_5=?, required_item_6=?, required_item_7=?, " +
+                             "required_item_8=?, required_item_9=?, required_item_10=?, result_item=?, " +
+                             "success_chance=?, cost=? WHERE id=?"
+             )) {
 
             // Wymagane przedmioty (sloty 0-9)
             for (int i = 0; i < 10; i++) {
@@ -723,32 +693,21 @@ public class MenuListener implements Listener {
                 return;
             }
 
-            // Szansa na sukces
-            double successChance = TemporaryData.getSuccessChance(player.getUniqueId());
-            ps.setDouble(12, successChance);
-
-            // Koszt
-            double cost = TemporaryData.getCost(player.getUniqueId());
-            ps.setDouble(13, cost);
-
-            // ID receptury
+            // Szansa na sukces i koszt
+            ps.setDouble(12, TemporaryData.getSuccessChance(player.getUniqueId()));
+            ps.setDouble(13, TemporaryData.getCost(player.getUniqueId()));
             ps.setInt(14, recipeId);
-            Bukkit.getLogger().info("[DEBUG] updateRecipe: successChance="
-                    + TemporaryData.getSuccessChance(player.getUniqueId())
-                    + ", cost=" + TemporaryData.getCost(player.getUniqueId())
-                    + ", recipeId=" + recipeId
-            );
 
-            ps.executeUpdate();
-            player.sendMessage(ChatColor.GREEN + "Recipe has been updated.");
             int updatedRows = ps.executeUpdate();
-            Bukkit.getLogger().info("[DEBUG] updatedRows: " + updatedRows);
+            if (updatedRows > 0) {
+                player.sendMessage(ChatColor.GREEN + "Recipe has been updated.");
+            } else {
+                player.sendMessage(ChatColor.RED + "No recipe was updated. The recipe might have been deleted.");
+            }
 
             // Wyczyść dane tymczasowe
             TemporaryData.removeSuccessChance(player.getUniqueId());
             TemporaryData.removeCost(player.getUniqueId());
-
-            // Usuń zapisany stan GUI
             AddRecipeMenu.removeGuiState(player.getUniqueId());
 
             player.closeInventory();
@@ -761,31 +720,27 @@ public class MenuListener implements Listener {
 
     // Metoda deleteRecipe
     private void deleteRecipe(Player player) {
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                player.sendMessage(ChatColor.RED + "Database connection error.");
-                return;
-            }
+        int recipeId = EditRecipeMenu.getRecipeId(player.getUniqueId());
+        if (recipeId == -1) {
+            player.sendMessage(ChatColor.RED + "Recipe ID not found.");
+            return;
+        }
 
-            int recipeId = EditRecipeMenu.getRecipeId(player.getUniqueId());
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM recipes WHERE id = ?")) {
 
-            if (recipeId == -1) {
-                player.sendMessage(ChatColor.RED + "Recipe ID not found.");
-                return;
-            }
-
-            PreparedStatement ps = conn.prepareStatement("DELETE FROM recipes WHERE id = ?");
             ps.setInt(1, recipeId);
-            ps.executeUpdate();
+            int deletedRows = ps.executeUpdate();
 
-            player.sendMessage(ChatColor.GREEN + "Recipe has been deleted.");
+            if (deletedRows > 0) {
+                player.sendMessage(ChatColor.GREEN + "Recipe has been deleted.");
+            } else {
+                player.sendMessage(ChatColor.RED + "No recipe was deleted. The recipe might have already been removed.");
+            }
 
             // Wyczyść dane tymczasowe
             TemporaryData.removeSuccessChance(player.getUniqueId());
             TemporaryData.removeCost(player.getUniqueId());
-
-            // Usuń zapisany stan GUI
             AddRecipeMenu.removeGuiState(player.getUniqueId());
 
             player.closeInventory();
@@ -796,45 +751,37 @@ public class MenuListener implements Listener {
         }
     }
 
+
     // Metoda saveCategoryLayout
     private void saveCategoryLayout(Inventory inv, String category) {
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                return;
-            }
-
+        try (Connection conn = Main.getConnection()) {
             // Najpierw pobierz wszystkie receptury z tej kategorii
-            PreparedStatement selectPs = conn.prepareStatement("SELECT id, result_item FROM recipes WHERE category = ?");
-            selectPs.setString(1, category);
-            ResultSet rs = selectPs.executeQuery();
+            try (PreparedStatement selectPs = conn.prepareStatement("SELECT id, result_item FROM recipes WHERE category = ?")) {
+                selectPs.setString(1, category);
+                ResultSet rs = selectPs.executeQuery();
 
-            Map<String, Integer> recipeIdMap = new HashMap<>();
+                Map<String, Integer> recipeIdMap = new HashMap<>();
+                while (rs.next()) {
+                    recipeIdMap.put(rs.getString("result_item"), rs.getInt("id"));
+                }
 
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String resultItemData = rs.getString("result_item");
-                recipeIdMap.put(resultItemData, id);
-            }
-
-            PreparedStatement updatePs = conn.prepareStatement("UPDATE recipes SET slot = ? WHERE id = ?");
-
-            for (int i = 0; i < 45; i++) {
-                ItemStack item = inv.getItem(i);
-                if (item != null && item.getType() != Material.WHITE_STAINED_GLASS_PANE) {
-                    String itemData = ItemStackSerializer.serialize(item);
-                    Integer recipeId = recipeIdMap.get(itemData);
-
-                    if (recipeId != null) {
-                        updatePs.setInt(1, i); // slot
-                        updatePs.setInt(2, recipeId); // id
-                        updatePs.addBatch();
+                // Następnie aktualizuj pozycje
+                try (PreparedStatement updatePs = conn.prepareStatement("UPDATE recipes SET slot = ? WHERE id = ?")) {
+                    for (int i = 0; i < 45; i++) {
+                        ItemStack item = inv.getItem(i);
+                        if (item != null && item.getType() != Material.WHITE_STAINED_GLASS_PANE) {
+                            String itemData = ItemStackSerializer.serialize(item);
+                            Integer recipeId = recipeIdMap.get(itemData);
+                            if (recipeId != null) {
+                                updatePs.setInt(1, i);
+                                updatePs.setInt(2, recipeId);
+                                updatePs.addBatch();
+                            }
+                        }
                     }
+                    updatePs.executeBatch();
                 }
             }
-
-            updatePs.executeBatch();
-
         } catch (SQLException e) {
             e.printStackTrace();
         }

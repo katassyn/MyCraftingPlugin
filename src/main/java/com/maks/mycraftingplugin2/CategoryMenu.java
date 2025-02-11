@@ -21,14 +21,9 @@ public class CategoryMenu {
         fillWithGlass(inv);
 
         // Pobierz receptury z bazy danych
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                player.sendMessage(ChatColor.RED + "Database connection error.");
-                return;
-            }
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE category = ? ORDER BY slot ASC")) {
 
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE category = ? ORDER BY slot ASC");
             ps.setString(1, category);
             ResultSet rs = ps.executeQuery();
 
@@ -71,6 +66,7 @@ public class CategoryMenu {
 
         } catch (SQLException e) {
             e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error loading recipes!");
         }
 
         // Przycisk "Back"
@@ -78,6 +74,7 @@ public class CategoryMenu {
 
         player.openInventory(inv);
     }
+
     public static void openEditor(Player player, String category, int page) {
         Inventory inv = Bukkit.createInventory(null, 54, "Edit Category: " + category);
 
@@ -85,14 +82,9 @@ public class CategoryMenu {
         fillWithGlass(inv);
 
         // Pobierz receptury z bazy danych
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                player.sendMessage(ChatColor.RED + "Database connection error.");
-                return;
-            }
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE category = ? ORDER BY slot ASC")) {
 
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE category = ? ORDER BY slot ASC");
             ps.setString(1, category);
             ResultSet rs = ps.executeQuery();
 
@@ -139,10 +131,12 @@ public class CategoryMenu {
 
         } catch (SQLException e) {
             e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error loading recipes!");
         }
 
         player.openInventory(inv);
     }
+
     private static ItemStack createMenuItem(Material material, String name) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();

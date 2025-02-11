@@ -23,8 +23,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
+          <source>15</source>
+          <target>15</target>
         </configuration>
       </plugin>
       <plugin>
@@ -76,6 +76,11 @@
           <artifactId>VaultAPI</artifactId>
           <version>1.7</version>
           <scope>provided</scope>
+      </dependency>
+      <dependency>
+          <groupId>com.zaxxer</groupId>
+          <artifactId>HikariCP</artifactId>
+          <version>4.0.3</version>
       </dependency>
   </dependencies>
 </project>

@@ -10,22 +10,16 @@ import org.bukkit.Material;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
-/**
- * This class handles the crafting scheme menu where players can see the recipe details and initiate crafting.
- */
+
 public class CraftingSchemeMenu {
 
     public static void open(Player player, ItemStack displayItem, int recipeId) {
         Inventory inv = Bukkit.createInventory(null, 45, "Crafting Scheme");
 
-        // Fill inventory with glass panes or other decorations
+        // Fill inventory with glass panes
         fillWithGlass(inv);
 
         // Set required items in the appropriate slots
@@ -49,125 +43,98 @@ public class CraftingSchemeMenu {
         player.openInventory(inv);
     }
 
-    private static void fillWithGlass(Inventory inv) {
-        ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta meta = glass.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(" ");
-            glass.setItemMeta(meta);
-        }
-
-        for (int i = 0; i < inv.getSize(); i++) {
-            inv.setItem(i, glass);
-        }
-    }
-
     private static void setRequiredItems(Inventory inv, int recipeId) {
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                return;
-            }
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE id = ?")) {
 
-            PreparedStatement ps = conn.prepareStatement(
-                    "SELECT * FROM recipes WHERE id = ?"
-            );
             ps.setInt(1, recipeId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                // Retrieve required items from the database and set them in the inventory
-                for (int i = 0; i < 10; i++) {
-                    String itemData = rs.getString("required_item_" + (i + 1));
-                    if (itemData != null) {
-                        ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
-
-                        // Set the required item in the appropriate slot
-                        // You can define the slots as per your design. Here, I'm placing them from slot 10 onwards.
-                        inv.setItem(10 + i, requiredItem);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // Retrieve required items from the database and set them in the inventory
+                    for (int i = 0; i < 10; i++) {
+                        String itemData = rs.getString("required_item_" + (i + 1));
+                        if (itemData != null) {
+                            ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
+                            // Set the required item in the appropriate slot
+                            inv.setItem(10 + i, requiredItem);
+                        }
                     }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            Bukkit.getLogger().severe("Error setting required items for recipe " + recipeId);
         }
     }
 
     private static ItemStack getResultItem(int recipeId) {
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                return null;
-            }
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT result_item FROM recipes WHERE id = ?")) {
 
-            PreparedStatement ps = conn.prepareStatement("SELECT result_item FROM recipes WHERE id = ?");
             ps.setInt(1, recipeId);
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String itemData = rs.getString("result_item");
+                    ItemStack resultItem = ItemStackSerializer.deserialize(itemData);
 
-            if (rs.next()) {
-                String itemData = rs.getString("result_item");
-                ItemStack resultItem = ItemStackSerializer.deserialize(itemData);
+                    // Store the recipe ID in the item's PersistentDataContainer
+                    ItemMeta meta = resultItem.getItemMeta();
+                    if (meta != null) {
+                        NamespacedKey key = new NamespacedKey(Main.getInstance(), "recipe_id");
+                        meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, recipeId);
+                        resultItem.setItemMeta(meta);
+                    }
 
-                // Store the recipe ID in the item's PersistentDataContainer
-                ItemMeta meta = resultItem.getItemMeta();
-                if (meta != null) {
-                    NamespacedKey key = new NamespacedKey(Main.getInstance(), "recipe_id");
-                    meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, recipeId);
-                    resultItem.setItemMeta(meta);
+                    return resultItem;
                 }
-
-                return resultItem;
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            Bukkit.getLogger().severe("Error getting result item for recipe " + recipeId);
         }
         return null;
     }
 
     private static ItemStack createCraftButton(int recipeId) {
-        try {
-            Connection conn = Main.getConnection();
-            if (conn == null) {
-                return null;
-            }
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT cost, success_chance FROM recipes WHERE id = ?")) {
 
-            PreparedStatement ps = conn.prepareStatement("SELECT cost, success_chance FROM recipes WHERE id = ?");
             ps.setInt(1, recipeId);
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    double cost = rs.getDouble("cost");
+                    double successChance = rs.getDouble("success_chance");
 
-            if (rs.next()) {
-                double cost = rs.getDouble("cost");
-                double successChance = rs.getDouble("success_chance");
+                    ItemStack craftButton = new ItemStack(Material.EMERALD);
+                    ItemMeta meta = craftButton.getItemMeta();
+                    if (meta != null) {
+                        meta.setDisplayName(ChatColor.GREEN + "Craft");
 
-                ItemStack craftButton = new ItemStack(Material.EMERALD);
-                ItemMeta meta = craftButton.getItemMeta();
-                if (meta != null) {
-                    meta.setDisplayName(ChatColor.GREEN + "Craft");
+                        List<String> lore = new ArrayList<>();
+                        lore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GOLD + formatCost(cost));
+                        lore.add(ChatColor.YELLOW + "Success Chance: " + ChatColor.GOLD + successChance + "%");
 
-                    List<String> lore = new ArrayList<>();
-                    lore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GOLD + formatCost(cost));
-                    lore.add(ChatColor.YELLOW + "Success Chance: " + ChatColor.GOLD + successChance + "%");
+                        meta.setLore(lore);
+                        craftButton.setItemMeta(meta);
+                    }
 
-                    meta.setLore(lore);
-                    craftButton.setItemMeta(meta);
+                    return craftButton;
                 }
-
-                return craftButton;
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            Bukkit.getLogger().severe("Error creating craft button for recipe " + recipeId);
         }
         return null;
     }
 
-    // Metoda do formatowania kosztu
     private static String formatCost(double cost) {
         if (cost >= 1_000_000_000) {
-            return String.format("%.2fB", cost / 1_000_000_000); // Miliardy
+            return String.format("%.2fB", cost / 1_000_000_000);
         } else if (cost >= 1_000_000) {
-            return String.format("%.2fM", cost / 1_000_000); // Miliony
+            return String.format("%.2fM", cost / 1_000_000);
         } else if (cost >= 1_000) {
-            return String.format("%.2fk", cost / 1_000); // Tysiące
+            return String.format("%.2fk", cost / 1_000);
         } else {
             return String.format("%.0f", cost);
         }
@@ -181,5 +148,18 @@ public class CraftingSchemeMenu {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private static void fillWithGlass(Inventory inv) {
+        ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        ItemMeta meta = glass.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(" ");
+            glass.setItemMeta(meta);
+        }
+
+        for (int i = 0; i < inv.getSize(); i++) {
+            inv.setItem(i, glass);
+        }
     }
 }
