@@ -1,12 +1,14 @@
 package com.maks.mycraftingplugin2;
 
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.sql.*;
 import java.util.*;
@@ -22,7 +24,7 @@ public class CategoryMenu {
 
         // Pobierz receptury z bazy danych
         try (Connection conn = Main.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE category = ? ORDER BY slot ASC")) {
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE category = ? ORDER BY id ASC")) {
 
             ps.setString(1, category);
             ResultSet rs = ps.executeQuery();
@@ -34,11 +36,17 @@ public class CategoryMenu {
                 ItemStack resultItem = ItemStackSerializer.deserialize(rs.getString("result_item"));
                 int recipeId = rs.getInt("id");
 
-                // Dodaj id receptury do metadanych przedmiotu
+                // Store recipe ID in PersistentDataContainer
                 ItemMeta meta = resultItem.getItemMeta();
                 if (meta != null) {
+                    // Add ID as persistent data
+                    NamespacedKey key = new NamespacedKey(Main.getInstance(), "recipe_id");
+                    meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, recipeId);
+
+                    // Display ID safely in lore
                     List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
-                    lore.add(ChatColor.GRAY + "Recipe ID: " + recipeId);
+                    // Format as String to avoid byte conversion issues
+                    lore.add(ChatColor.GRAY + "Recipe ID: " + String.valueOf(recipeId));
                     meta.setLore(lore);
                     resultItem.setItemMeta(meta);
                 }
@@ -83,7 +91,7 @@ public class CategoryMenu {
 
         // Pobierz receptury z bazy danych
         try (Connection conn = Main.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE category = ? ORDER BY slot ASC")) {
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE category = ? ORDER BY id ASC"))     {
 
             ps.setString(1, category);
             ResultSet rs = ps.executeQuery();
@@ -94,16 +102,23 @@ public class CategoryMenu {
                 ItemStack resultItem = ItemStackSerializer.deserialize(rs.getString("result_item"));
                 int recipeId = rs.getInt("id");
 
-                // Dodaj id receptury do metadanych przedmiotu
+                // Store recipe ID in PersistentDataContainer
                 ItemMeta meta = resultItem.getItemMeta();
                 if (meta != null) {
+                    // Add ID as persistent data
+                    NamespacedKey key = new NamespacedKey(Main.getInstance(), "recipe_id");
+                    meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, recipeId);
+
+                    // Display ID safely in lore
                     List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
-                    lore.add(ChatColor.GRAY + "Recipe ID: " + recipeId);
+                    // Format as String to avoid byte conversion issues
+                    lore.add(ChatColor.GRAY + "Recipe ID: " + String.valueOf(recipeId));
                     meta.setLore(lore);
                     resultItem.setItemMeta(meta);
                 }
 
                 items.add(resultItem);
+                // No recipeIds.add() here since the list doesn't exist in this method
             }
 
             int startIndex = page * ITEMS_PER_PAGE;

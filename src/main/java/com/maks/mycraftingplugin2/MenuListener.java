@@ -342,14 +342,21 @@ public class MenuListener implements Listener {
                 }
 
                 // Szukamy ID receptury w lore
-                List<String> lore = meta.getLore();
                 int recipeId = -1;
-                for (String line : lore) {
-                    String clean = ChatColor.stripColor(line);
-                    if (clean.startsWith("Recipe ID: ")) {
-                        String idStr = clean.replace("Recipe ID: ", "").trim();
-                        recipeId = Integer.parseInt(idStr);
-                        break;
+// First try to get ID from persistent data
+                NamespacedKey key = new NamespacedKey(Main.getInstance(), "recipe_id");
+                if (meta.getPersistentDataContainer().has(key, PersistentDataType.INTEGER)) {
+                    recipeId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+                } else {
+                    // Fall back to lore parsing for backward compatibility
+                    List<String> lore = meta.getLore();
+                    for (String line : lore) {
+                        String clean = ChatColor.stripColor(line);
+                        if (clean.startsWith("Recipe ID: ")) {
+                            String idStr = clean.replace("Recipe ID: ", "").trim();
+                            recipeId = Integer.parseInt(idStr);
+                            break;
+                        }
                     }
                 }
 
@@ -606,40 +613,56 @@ public class MenuListener implements Listener {
             return;
         }
 
+        // Get highest ID to set proper slot
+        int nextSlot = 0;
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT MAX(id) FROM recipes WHERE category = ?")) {
+            ps.setString(1, category);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next() && rs.getObject(1) != null) {
+                nextSlot = rs.getInt(1) + 1;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error determining slot position.");
+            return;
+        }
+
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "INSERT INTO recipes (category, required_item_1, required_item_2, required_item_3, " +
+                     "INSERT INTO recipes (category, slot, required_item_1, required_item_2, required_item_3, " +
                              "required_item_4, required_item_5, required_item_6, required_item_7, required_item_8, " +
                              "required_item_9, required_item_10, result_item, success_chance, cost) " +
-                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
              )) {
 
             ps.setString(1, category);
+            ps.setInt(2, nextSlot);
 
             // Wymagane przedmioty (sloty 0-9)
             for (int i = 0; i < 10; i++) {
                 ItemStack item = inv.getItem(i);
                 if (item != null && item.getType() != Material.GRAY_STAINED_GLASS_PANE) {
-                    ps.setString(i + 2, ItemStackSerializer.serialize(item));
+                    ps.setString(i + 3, ItemStackSerializer.serialize(item));
                 } else {
-                    ps.setString(i + 2, null);
+                    ps.setString(i + 3, null);
                 }
             }
 
             // Przedmiot wynikowy (slot 13)
             ItemStack resultItem = inv.getItem(13);
             if (resultItem != null && resultItem.getType() != Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
-                ps.setString(12, ItemStackSerializer.serialize(resultItem));
+                ps.setString(13, ItemStackSerializer.serialize(resultItem));
             } else {
                 player.sendMessage(ChatColor.RED + "You must set a result item!");
                 return;
             }
 
             // Szansa na sukces
-            ps.setDouble(13, TemporaryData.getSuccessChance(player.getUniqueId()));
+            ps.setDouble(14, TemporaryData.getSuccessChance(player.getUniqueId()));
 
             // Koszt
-            ps.setDouble(14, TemporaryData.getCost(player.getUniqueId()));
+            ps.setDouble(15, TemporaryData.getCost(player.getUniqueId()));
 
             ps.executeUpdate();
             player.sendMessage(ChatColor.GREEN + "Recipe has been saved.");
@@ -656,7 +679,6 @@ public class MenuListener implements Listener {
             player.sendMessage(ChatColor.RED + "An error occurred while saving the recipe.");
         }
     }
-
 
     // Metoda updateRecipe
     private void updateRecipe(Player player, Inventory inv) {
