@@ -672,14 +672,15 @@ public class MenuListener implements Listener {
             TemporaryData.removeCost(player.getUniqueId());
             AddRecipeMenu.removeGuiState(player.getUniqueId());
 
-            player.closeInventory();
+            // Zamiast zamykać GUI, otwórz z powrotem menu kategorii
+            int page = TemporaryData.getPage(player.getUniqueId(), category);
+            CategoryMenu.openEditor(player, category, page);
 
         } catch (SQLException e) {
             e.printStackTrace();
             player.sendMessage(ChatColor.RED + "An error occurred while saving the recipe.");
         }
     }
-
     // Metoda updateRecipe
     private void updateRecipe(Player player, Inventory inv) {
         int recipeId = EditRecipeMenu.getRecipeId(player.getUniqueId());
@@ -732,7 +733,10 @@ public class MenuListener implements Listener {
             TemporaryData.removeCost(player.getUniqueId());
             AddRecipeMenu.removeGuiState(player.getUniqueId());
 
-            player.closeInventory();
+            // Instead of player.closeInventory();
+            String category = TemporaryData.getLastCategory(player.getUniqueId());
+            int page = TemporaryData.getPage(player.getUniqueId(), category);
+            CategoryMenu.openEditor(player, category, page);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -765,7 +769,10 @@ public class MenuListener implements Listener {
             TemporaryData.removeCost(player.getUniqueId());
             AddRecipeMenu.removeGuiState(player.getUniqueId());
 
-            player.closeInventory();
+            // Instead of player.closeInventory();
+            String category = TemporaryData.getLastCategory(player.getUniqueId());
+            int page = TemporaryData.getPage(player.getUniqueId(), category);
+            CategoryMenu.openEditor(player, category, page);
 
         } catch (SQLException e) {
             e.printStackTrace();
