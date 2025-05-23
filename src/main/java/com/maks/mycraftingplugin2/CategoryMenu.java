@@ -163,7 +163,8 @@ public class CategoryMenu {
     }
 
     private static void fillWithGlass(Inventory inv) {
-        ItemStack glass = new ItemStack(Material.WHITE_STAINED_GLASS_PANE);
+        // Changed to BLACK_STAINED_GLASS_PANE for consistency
+        ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = glass.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(" ");

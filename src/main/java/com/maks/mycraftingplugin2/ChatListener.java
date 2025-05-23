@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class ChatListener implements Listener {
                     reopenRecipeMenu(player);
 
                 } else if (state.equals("entering_cost")) {
-                    // Gracz ustawia koszt
+                    // Gracz ustawia koszt - sprawdzamy kontekst
                     try {
                         double cost = parseCost(message);
                         Bukkit.getLogger().info("[DEBUG] onPlayerChat (cost): after parse -> " + cost);
@@ -77,7 +78,37 @@ public class ChatListener implements Listener {
                                 + "Invalid input. Please enter a valid cost (like 500, 1k, 2m).");
                     }
                     removePlayerState(uuid);
-                    reopenRecipeMenu(player);
+
+                    // Sprawdzamy kontekst i otwieramy odpowiednie menu
+                    reopenAppropriateMenu(player);
+                } else if (state.equals("entering_emilia_daily_limit")) {
+                    try {
+                        int dailyLimit = Integer.parseInt(message.trim());
+                        if (dailyLimit < 0) {
+                            player.sendMessage(ChatColor.RED + "Daily limit cannot be negative. Please enter a valid number.");
+                        } else {
+                            TemporaryData.setPlayerData(uuid, "emilia_daily_limit", dailyLimit);
+                            player.sendMessage(ChatColor.GREEN + "Daily limit set to " + dailyLimit + ".");
+                        }
+                    } catch (NumberFormatException e) {
+                        player.sendMessage(ChatColor.RED + "Invalid input. Please enter a valid number.");
+                    }
+                    removePlayerState(uuid);
+                    reopenEmiliaMenu(player);
+                } else if (state.equals("entering_zumpe_daily_limit")) {
+                    try {
+                        int dailyLimit = Integer.parseInt(message.trim());
+                        if (dailyLimit < 0) {
+                            player.sendMessage(ChatColor.RED + "Daily limit cannot be negative. Please enter a valid number.");
+                        } else {
+                            TemporaryData.setPlayerData(uuid, "zumpe_daily_limit", dailyLimit);
+                            player.sendMessage(ChatColor.GREEN + "Daily limit set to " + dailyLimit + ".");
+                        }
+                    } catch (NumberFormatException e) {
+                        player.sendMessage(ChatColor.RED + "Invalid input. Please enter a valid number.");
+                    }
+                    removePlayerState(uuid);
+                    reopenZumpeMenu(player);
                 }
             });
         }
@@ -124,5 +155,96 @@ public class ChatListener implements Listener {
         input = input.replace("%", "").trim();
         Bukkit.getLogger().info("[DEBUG] parsePercentage: after replace='" + input + "'");
         return Double.parseDouble(input);
+    }
+
+    /**
+     * Re-opens the Emilia item menu after input from chat.
+     */
+    private void reopenEmiliaMenu(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        // Check if editing an existing item
+        int itemId = EmiliaAddItemMenu.getEditItemId(uuid);
+        if (itemId != -1) {
+            EmiliaAddItemMenu.openEdit(player, itemId);
+            return;
+        }
+
+        // Check if adding a new item
+        String category = EmiliaAddItemMenu.getCategory(uuid);
+        if (category != null) {
+            String[] parts = category.split("_");
+            if (parts.length >= 3) {
+                String shopType = parts[1].equals("shop") ? "Shop" : "Event Shop";
+                String tierType = capitalizeFirstLetter(parts[parts.length - 1]);
+
+                EmiliaAddItemMenu.open(player, shopType, tierType);
+            }
+        }
+    }
+
+    private String capitalizeFirstLetter(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
+    }
+
+    /**
+     * Sprawdza kontekst i otwiera odpowiednie menu po ustawieniu kosztu.
+     */
+    private void reopenAppropriateMenu(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+            Bukkit.getLogger().info("[ChatListener] Reopening appropriate menu for player: " + player.getName());
+        }
+
+        // Sprawdzamy, czy to Emilia
+        String emiliaCategory = EmiliaAddItemMenu.getCategory(uuid);
+        int emiliaItemId = EmiliaAddItemMenu.getEditItemId(uuid);
+
+        if (emiliaCategory != null || emiliaItemId != -1) {
+            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                Bukkit.getLogger().info("[ChatListener] Detected Emilia context");
+            }
+            reopenEmiliaMenu(player);
+            return;
+        }
+
+        // Sprawdzamy, czy to Zumpe - POPRAWKA: sprawdź też czy jest zapisany stan GUI
+        int zumpeItemId = ZumpeAddItemMenu.getEditItemId(uuid);
+        ItemStack[] zumpeGuiState = ZumpeAddItemMenu.getGuiState(uuid); // Dodaj getter w ZumpeAddItemMenu
+
+        if (zumpeItemId != -1 || zumpeGuiState != null) {
+            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                Bukkit.getLogger().info("[ChatListener] Detected Zumpe context - itemId: " + zumpeItemId);
+            }
+            reopenZumpeMenu(player);
+            return;
+        }
+
+        // W przeciwnym razie to normalne receptury
+        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+            Bukkit.getLogger().info("[ChatListener] Detected normal recipe context");
+        }
+        reopenRecipeMenu(player);
+    }
+
+    /**
+     * Re-opens the Zumpe item menu after input from chat.
+     */
+    private void reopenZumpeMenu(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        // Check if editing an existing item
+        int itemId = ZumpeAddItemMenu.getEditItemId(uuid);
+        if (itemId != -1) {
+            ZumpeAddItemMenu.openEdit(player, itemId);
+            return;
+        }
+
+        // If adding a new item
+        ZumpeAddItemMenu.open(player);
     }
 }

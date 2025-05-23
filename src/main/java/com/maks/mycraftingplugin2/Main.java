@@ -10,6 +10,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Calendar;
 
 public class Main extends JavaPlugin {
 
@@ -33,10 +34,20 @@ public class Main extends JavaPlugin {
         getCommand("editcrafting").setExecutor(new EditCraftingCommand());
         getCommand("alchemy").setExecutor(new AlchemyCommand());
         getCommand("edit_alchemy").setExecutor(new EditAlchemyCommand());
+        getCommand("jeweler").setExecutor(new JewelerCommand());
+        getCommand("edit_jeweler").setExecutor(new EditJewelerCommand());
+        getCommand("jewels_crushing").setExecutor(new JewelsCrushingCommand());
+        getCommand("emilia").setExecutor(new EmiliaCommand());
+        getCommand("edit_emilia").setExecutor(new EditEmiliaCommand());
+        getCommand("zumpe").setExecutor(new ZumpeCommand());
+        getCommand("edit_zumpe").setExecutor(new EditZumpeCommand());
 
         // Rejestracja listenerów
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
+
+        // Schedule daily transaction cleanup at midnight
+        setupTransactionCleanupTask();
 
         ConsoleCommandSender console = Bukkit.getConsoleSender();
         console.sendMessage("§aMyCraftingPlugin2 has been enabled!");
@@ -131,6 +142,97 @@ public class Main extends JavaPlugin {
                 """;
 
                 statement.executeUpdate(createTable);
+
+                // Create Emilia shop tables if they don't exist
+                String createEmiliaItemsTable = """
+                    CREATE TABLE IF NOT EXISTS emilia_items (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        category VARCHAR(255),
+                        slot INT,
+                        item TEXT,
+                        cost DOUBLE,
+                        daily_limit INT DEFAULT 0
+                    )
+                """;
+
+                String createEmiliaTransactionsTable = """
+                    CREATE TABLE IF NOT EXISTS emilia_transactions (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        player_uuid VARCHAR(36),
+                        item_id INT,
+                        transaction_date VARCHAR(10),
+                        transaction_time DATETIME,
+                        INDEX (player_uuid, item_id, transaction_date)
+                    )
+                """;
+
+                statement.executeUpdate(createEmiliaItemsTable);
+                statement.executeUpdate(createEmiliaTransactionsTable);
+
+                // Create Zumpe shop tables if they don't exist
+                String createZumpeItemsTable = """
+                    CREATE TABLE IF NOT EXISTS zumpe_items (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        slot INT,
+                        item TEXT,
+                        cost DOUBLE,
+                        daily_limit INT DEFAULT 0
+                    )
+                """;
+
+                String createZumpeTransactionsTable = """
+                    CREATE TABLE IF NOT EXISTS zumpe_transactions (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        player_uuid VARCHAR(36),
+                        item_id INT,
+                        transaction_date VARCHAR(10),
+                        transaction_time DATETIME,
+                        INDEX (player_uuid, item_id, transaction_date)
+                    )
+                """;
+
+                statement.executeUpdate(createZumpeItemsTable);
+                statement.executeUpdate(createZumpeTransactionsTable);
+
+                // Update Emilia items table to include required items
+                String updateEmiliaTable = """
+                    ALTER TABLE emilia_items 
+                    ADD COLUMN IF NOT EXISTS required_item_1 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_2 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_3 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_4 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_5 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_6 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_7 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_8 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_9 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_10 TEXT
+                """;
+
+                // Update Zumpe items table to include required items  
+                String updateZumpeTable = """
+                    ALTER TABLE zumpe_items 
+                    ADD COLUMN IF NOT EXISTS required_item_1 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_2 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_3 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_4 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_5 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_6 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_7 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_8 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_9 TEXT,
+                    ADD COLUMN IF NOT EXISTS required_item_10 TEXT
+                """;
+
+                try {
+                    statement.executeUpdate(updateEmiliaTable);
+                    statement.executeUpdate(updateZumpeTable);
+                    getLogger().info("Successfully updated shop tables with required items columns!");
+                } catch (SQLException e) {
+                    // Ignore if columns already exist
+                    getLogger().info("Shop tables already have required items columns or update failed: " + e.getMessage());
+                }
+
                 getLogger().info("Successfully initialized database tables!");
             }
 
@@ -153,5 +255,27 @@ public class Main extends JavaPlugin {
         } else {
             getLogger().severe("No economy plugin found!");
         }
+    }
+
+    private void setupTransactionCleanupTask() {
+        Calendar nextRun = Calendar.getInstance();
+        nextRun.set(Calendar.HOUR_OF_DAY, 23);
+        nextRun.set(Calendar.MINUTE, 59);
+        nextRun.set(Calendar.SECOND, 0);
+
+        // If it's already past the time, schedule for tomorrow
+        if (nextRun.getTimeInMillis() < System.currentTimeMillis()) {
+            nextRun.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        long initialDelay = nextRun.getTimeInMillis() - System.currentTimeMillis();
+        long dayInTicks = 24 * 60 * 60 * 20; // 24 hours in ticks
+
+        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
+            EmiliaTransactionManager.cleanupOldTransactions();
+            ZumpeTransactionManager.cleanupOldTransactions();
+        }, initialDelay / 50, dayInTicks); // Convert ms to ticks
+
+        getLogger().info("Scheduled shop transactions cleanup for " + nextRun.getTime());
     }
 }

@@ -15,6 +15,8 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.sql.*;
 import java.util.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 public class MenuListener implements Listener {
 
@@ -70,11 +72,44 @@ public class MenuListener implements Listener {
             handleEditCategories(event, player, clickedItem, itemName);
         } else if (title.equals("Crafting Scheme")) {
             handleCraftingScheme(event, player, clickedItem, itemName);
-        }else if (title.equals("Alchemy Menu")) {
+        } else if (title.equals("Alchemy Menu")) {
             handleAlchemyMenuClick(player, itemName);
-        }
-        else if (title.equals("Edit Alchemy Menu")) {
+        } else if (title.equals("Edit Alchemy Menu")) {
             handleEditAlchemyMenuClick(player, itemName);
+        } else if (title.equals("Jeweler Menu")) {
+            handleJewelerMenuClick(player, itemName);
+        } else if (title.equals("Edit Jeweler Menu")) {
+            handleEditJewelerMenuClick(player, itemName);
+        } else if (title.equals("Jewels Crushing")) {
+            handleJewelsCrushingMenuClick(event, player, clickedItem, itemName);
+        } else if (title.equals("Emilia Shop")) {
+            handleEmiliaMainMenu(player, clickedItem, itemName);
+        } else if (title.equals("Edit Emilia Shop")) {
+            handleEditEmiliaMainMenu(player, clickedItem, itemName);
+        } else if (title.equals("Emilia - Shop")) {
+            handleEmiliaShopMenu(player, clickedItem, itemName);
+        } else if (title.equals("Edit Emilia - Shop")) {
+            handleEditEmiliaShopMenu(player, clickedItem, itemName);
+        } else if (title.equals("Emilia - Event Shop")) {
+            handleEmiliaEventShopMenu(player, clickedItem, itemName);
+        } else if (title.equals("Edit Emilia - Event Shop")) {
+            handleEditEmiliaEventShopMenu(player, clickedItem, itemName);
+        } else if (title.startsWith("Emilia: Shop") || title.startsWith("Emilia: Event Shop")) {
+            handleEmiliaItemsMenu(event, player, clickedItem, itemName, title);
+        } else if (title.startsWith("Edit Emilia: Shop") || title.startsWith("Edit Emilia: Event Shop")) {
+            handleEditEmiliaItemsMenu(event, player, clickedItem, itemName, title);
+        } else if (title.equals("Add Emilia Item") || title.equals("Edit Emilia Item")) {
+            handleEmiliaAddEditItemMenu(event, player, clickedItem, itemName, title);
+        } else if (title.equals("Zumpe Shop")) {
+            handleZumpeShopMenu(event, player, clickedItem, itemName);
+        } else if (title.equals("Edit Zumpe Shop")) {
+            handleEditZumpeShopMenu(event, player, clickedItem, itemName);
+        } else if (title.equals("Add Zumpe Item") || title.equals("Edit Zumpe Item")) {
+            handleZumpeAddEditItemMenu(event, player, clickedItem, itemName, title);
+        } else if (title.equals("Emilia Exchange")) {
+            handleEmiliaConfirmationMenu(event, player, clickedItem, itemName);
+        } else if (title.equals("Zumpe Exchange")) {
+            handleZumpeConfirmationMenu(event, player, clickedItem, itemName);
         }
 
     }
@@ -92,8 +127,29 @@ public class MenuListener implements Listener {
                 || title.startsWith("Edit Difficulty for ")
                 || title.startsWith("Edit Category: ")
                 || title.equals("Crafting Scheme")
-                ||title.equals("Alchemy Menu")
-                || title.equals("Edit Alchemy Menu");
+                || title.equals("Alchemy Menu")
+                || title.equals("Edit Alchemy Menu")
+                || title.equals("Jeweler Menu")
+                || title.equals("Edit Jeweler Menu")
+                || title.equals("Jewels Crushing")
+                || title.equals("Emilia Shop")
+                || title.equals("Edit Emilia Shop")
+                || title.equals("Emilia - Shop")
+                || title.equals("Edit Emilia - Shop")
+                || title.equals("Emilia - Event Shop")
+                || title.equals("Edit Emilia - Event Shop")
+                || title.startsWith("Emilia: Shop")
+                || title.startsWith("Emilia: Event Shop")
+                || title.startsWith("Edit Emilia: Shop")
+                || title.startsWith("Edit Emilia: Event Shop")
+                || title.equals("Add Emilia Item")
+                || title.equals("Edit Emilia Item")
+                || title.equals("Zumpe Shop")
+                || title.equals("Edit Zumpe Shop")
+                || title.equals("Add Zumpe Item")
+                || title.equals("Edit Zumpe Item")
+                || title.equals("Emilia Exchange")
+                || title.equals("Zumpe Exchange");
     }
     // Method to handle "Add New Recipe" and "Edit Recipe" inventories
 // Klasa: MenuListener
@@ -298,6 +354,14 @@ public class MenuListener implements Listener {
                         DifficultyMenu.open(player, qLevel);
                     }
                 }
+                // Jeżeli to kategoria Jewelera
+                else if (category.equalsIgnoreCase("jewels_upgrading")) {
+                    if (isEditMode) {
+                        JewelerMainMenu.openEditor(player);
+                    } else {
+                        JewelerMainMenu.open(player);
+                    }
+                }
                 // Inne kategorie (keys, lootboxes, itd.)
                 else {
                     if (isEditMode) {
@@ -370,9 +434,9 @@ public class MenuListener implements Listener {
                     // Otwórz menu edycji receptury
                     EditRecipeMenu.open(player, recipeId);
                 } else {
-                    // Otwórz CraftingSchemeMenu
+                    // Otwórz UnifiedConfirmationMenu
                     TemporaryData.setLastCategory(player.getUniqueId(), category);
-                    CraftingSchemeMenu.open(player, clickedItem, recipeId);
+                    UnifiedConfirmationMenu.open(player, recipeId, UnifiedConfirmationMenu.ShopType.CRAFTING);
                 }
             }
 
@@ -472,7 +536,32 @@ public class MenuListener implements Listener {
 
                     // Check if the player has enough money
                     double cost = rs.getDouble("cost");
-                    if (Main.getEconomy().getBalance(player) < cost) {
+
+                    // Sprawdź czy jest dostępne API TrinketsPlugin
+                    double discountMultiplier = 1.0;
+
+                    try {
+                        // Próba użycia JewelAPI
+                        Class<?> jewelAPIClass = Class.forName("com.maks.trinketsplugin.JewelAPI");
+                        Method getCraftingDiscountMethod = jewelAPIClass.getMethod("getCraftingDiscount", Player.class);
+                        Object result = getCraftingDiscountMethod.invoke(null, player);
+                        if (result instanceof Double) {
+                            discountMultiplier = (Double) result;
+                            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                                Main.getInstance().getLogger().info("Applied crafting discount from Steam Sale Jewel: " + discountMultiplier);
+                            }
+                        }
+                    } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                        // API Niedostępne, używamy domyślnego mnożnika 1.0
+                        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                            Main.getInstance().getLogger().warning("TrinketsPlugin JewelAPI not available: " + e.getMessage());
+                        }
+                    }
+
+                    // Zastosuj zniżkę do kosztu
+                    double finalCost = cost * discountMultiplier;
+
+                    if (Main.getEconomy().getBalance(player) < finalCost) {
                         player.sendMessage(ChatColor.RED + "You don't have enough money.");
                         return;
                     }
@@ -482,8 +571,14 @@ public class MenuListener implements Listener {
                         removeItems(player, requiredItem);
                     }
 
-                    // Deduct the cost
-                    Main.getEconomy().withdrawPlayer(player, cost);
+                    // Informacja o zniżce
+                    if (discountMultiplier < 1.0) {
+                        player.sendMessage(ChatColor.GOLD + "Your Merchant Jewel gave you a " + 
+                                (int)((1.0 - discountMultiplier) * 100) + "% discount!");
+                    }
+
+                    // Deduct the cost (zaktualizowana linijka - pobierz odjąć skorygowany koszt)
+                    Main.getEconomy().withdrawPlayer(player, finalCost);
 
                     // Calculate success chance
                     double successChance = rs.getDouble("success_chance");
@@ -491,7 +586,14 @@ public class MenuListener implements Listener {
                         // Success - give the item to the player
                         player.getInventory().addItem(resultItem);
                         player.sendMessage(ChatColor.GREEN + "Crafting successful!");
-                        player.closeInventory();
+
+                        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                            Bukkit.getLogger().info("[Crafting] Success - keeping menu open");
+                        }
+
+                        // Opcjonalnie możesz odświeżyć przycisk Craft aby pokazać aktualny koszt
+                        // (jeśli gracz ma mniej pieniędzy po craftingu)
+
                     } else {
                         player.sendMessage(ChatColor.RED + "Crafting failed.");
                     }
@@ -798,7 +900,7 @@ public class MenuListener implements Listener {
                 try (PreparedStatement updatePs = conn.prepareStatement("UPDATE recipes SET slot = ? WHERE id = ?")) {
                     for (int i = 0; i < 45; i++) {
                         ItemStack item = inv.getItem(i);
-                        if (item != null && item.getType() != Material.WHITE_STAINED_GLASS_PANE) {
+                        if (item != null && item.getType() != Material.BLACK_STAINED_GLASS_PANE) {
                             String itemData = ItemStackSerializer.serialize(item);
                             Integer recipeId = recipeIdMap.get(itemData);
                             if (recipeId != null) {
@@ -851,6 +953,1031 @@ public class MenuListener implements Listener {
                 break;
             default:
                 break;
+        }
+    }
+
+    private void handleJewelerMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Jewels Upgrading":
+                CategoryMenu.open(player, "jewels_upgrading", 0);
+                break;
+            case "Jewels Crushing":
+                // Use the method that bypasses permission checks when opening from jeweler menu
+                JewelsCrushingCommand.openMenuWithoutPermissionCheck(player);
+                break;
+            case "Back":
+                // Go back to crafting menu instead of jeweler
+                MainMenu.open(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEditJewelerMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Jewels Upgrading":
+                CategoryMenu.openEditor(player, "jewels_upgrading", 0);
+                break;
+            case "Jewels Crushing":
+                // No edit mode for crushing, just open normal crushing menu
+                // Use the method that bypasses permission checks when opening from jeweler edit menu
+                JewelsCrushingCommand.openMenuWithoutPermissionCheck(player);
+                break;
+            case "Back":
+                // Go back to edit crafting menu
+                MainMenu.openEditor(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleJewelsCrushingMenuClick(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        int slot = event.getRawSlot();
+        Inventory inv = event.getInventory();
+
+        // This is crucial - needed to properly handle click and drag events
+        if (event.getClickedInventory() == null) {
+            return;
+        }
+
+        // Allow placing/removing items in first two rows (slots 0-17)
+        if (slot < 18 && event.getClickedInventory().equals(event.getView().getTopInventory())) {
+            // Check if the player is adding a jewel
+            if (event.getAction().name().contains("PLACE")) {
+                ItemStack cursor = event.getCursor();
+                if (cursor != null && cursor.getType() != Material.AIR) {
+                    // Check if it's a valid jewel
+                    if (!JewelsCrushingMenu.isJewel(cursor)) {
+                        player.sendMessage(ChatColor.RED + "You can only place jewels here!");
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
+            // Allow the action (placing/removing)
+            event.setCancelled(false);
+            return;
+        }
+
+        // If clicking in player inventory, allow it
+        if (event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+            event.setCancelled(false);
+            return;
+        }
+
+        // Handle confirm button
+        if (slot == 22 && itemName != null && itemName.equals("Confirm Crushing")) {
+            JewelsCrushingMenu.processJewels(player, inv);
+            event.setCancelled(true);
+            return;
+        }
+
+        // Cancel click on bottom row glass panes
+        event.setCancelled(true);
+    }
+
+    private void handleEmiliaMainMenu(Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Shop":
+                EmiliaShopMenu.open(player);
+                break;
+            case "Event Shop":
+                EmiliaEventShopMenu.open(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEditEmiliaMainMenu(Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Shop":
+                EmiliaShopMenu.openEditor(player);
+                break;
+            case "Event Shop":
+                EmiliaEventShopMenu.openEditor(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEmiliaShopMenu(Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            EmiliaMainMenu.open(player);
+            return;
+        }
+
+        // Check if item is locked (contains "Locked")
+        if (itemName.contains("Locked")) {
+            player.sendMessage(ChatColor.RED + "You don't have access to this tier!");
+            return;
+        }
+
+        String tierType = ChatColor.stripColor(itemName);
+        if (tierType.equals("Basic") || tierType.equals("Premium") || tierType.equals("Deluxe")) {
+            EmiliaShopItemsMenu.open(player, "Shop", tierType, 0);
+        }
+    }
+
+    private void handleEditEmiliaShopMenu(Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            EmiliaMainMenu.openEditor(player);
+            return;
+        }
+
+        String tierType = ChatColor.stripColor(itemName);
+        if (tierType.equals("Basic") || tierType.equals("Premium") || tierType.equals("Deluxe")) {
+            EmiliaShopItemsMenu.openEditor(player, "Shop", tierType, 0);
+        }
+    }
+
+    private void handleEmiliaEventShopMenu(Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            EmiliaMainMenu.open(player);
+            return;
+        }
+
+        // Check if item is locked (contains "Locked")
+        if (itemName.contains("Locked")) {
+            player.sendMessage(ChatColor.RED + "You don't have access to this tier!");
+            return;
+        }
+
+        String tierType = ChatColor.stripColor(itemName);
+        if (tierType.equals("Basic") || tierType.equals("Premium") || tierType.equals("Deluxe")) {
+            EmiliaShopItemsMenu.open(player, "Event Shop", tierType, 0);
+        }
+    }
+
+    private void handleEditEmiliaEventShopMenu(Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            EmiliaMainMenu.openEditor(player);
+            return;
+        }
+
+        String tierType = ChatColor.stripColor(itemName);
+        if (tierType.equals("Basic") || tierType.equals("Premium") || tierType.equals("Deluxe")) {
+            EmiliaShopItemsMenu.openEditor(player, "Event Shop", tierType, 0);
+        }
+    }
+
+    private void handleEmiliaItemsMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            String shopType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_shop_type");
+            if (shopType != null) {
+                if (shopType.equals("Shop")) {
+                    EmiliaShopMenu.open(player);
+                } else if (shopType.equals("Event Shop")) {
+                    EmiliaEventShopMenu.open(player);
+                }
+            }
+            return;
+        }
+
+        if (itemName.equals("Next Page")) {
+            String shopType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_shop_type");
+            String tierType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_tier_type");
+
+            if (shopType != null && tierType != null) {
+                String category = "emilia_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
+                int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
+                EmiliaShopItemsMenu.open(player, shopType, tierType, currentPage + 1);
+            }
+            return;
+        }
+
+        if (itemName.equals("Previous Page")) {
+            String shopType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_shop_type");
+            String tierType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_tier_type");
+
+            if (shopType != null && tierType != null) {
+                String category = "emilia_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
+                int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
+                if (currentPage > 0) {
+                    EmiliaShopItemsMenu.open(player, shopType, tierType, currentPage - 1);
+                }
+            }
+            return;
+        }
+
+        // Clicked on an item - use unified confirmation menu
+        if (clickedItem != null && clickedItem.getType() != Material.BLACK_STAINED_GLASS_PANE) {
+            ItemMeta meta = clickedItem.getItemMeta();
+            if (meta != null) {
+                NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_id");
+                if (meta.getPersistentDataContainer().has(key, PersistentDataType.INTEGER)) {
+                    int itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+
+                    // Use UnifiedConfirmationMenu
+                    UnifiedConfirmationMenu.open(player, itemId, UnifiedConfirmationMenu.ShopType.EMILIA);
+
+                    if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                        Bukkit.getLogger().info("[MenuListener] Opening unified confirmation for Emilia item: " + itemId);
+                    }
+                }
+            }
+        }
+    }
+
+    private void handleEditEmiliaItemsMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            String shopType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_shop_type");
+            if (shopType != null) {
+                if (shopType.equals("Shop")) {
+                    EmiliaShopMenu.openEditor(player);
+                } else if (shopType.equals("Event Shop")) {
+                    EmiliaEventShopMenu.openEditor(player);
+                }
+            }
+            return;
+        }
+
+        if (itemName.equals("Next Page")) {
+            String shopType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_shop_type");
+            String tierType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_tier_type");
+
+            if (shopType != null && tierType != null) {
+                String category = "emilia_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
+                int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
+                EmiliaShopItemsMenu.openEditor(player, shopType, tierType, currentPage + 1);
+            }
+            return;
+        }
+
+        if (itemName.equals("Previous Page")) {
+            String shopType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_shop_type");
+            String tierType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_tier_type");
+
+            if (shopType != null && tierType != null) {
+                String category = "emilia_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
+                int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
+                if (currentPage > 0) {
+                    EmiliaShopItemsMenu.openEditor(player, shopType, tierType, currentPage - 1);
+                }
+            }
+            return;
+        }
+
+        if (itemName.equals("Add Item")) {
+            String shopType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_shop_type");
+            String tierType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_tier_type");
+
+            if (shopType != null && tierType != null) {
+                EmiliaAddItemMenu.open(player, shopType, tierType);
+            }
+            return;
+        }
+
+        // Clicked on an item to edit
+        if (clickedItem != null && clickedItem.getType() != Material.BLACK_STAINED_GLASS_PANE) {
+            ItemMeta meta = clickedItem.getItemMeta();
+            if (meta != null) {
+                NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_id");
+                if (meta.getPersistentDataContainer().has(key, PersistentDataType.INTEGER)) {
+                    int itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+                    EmiliaAddItemMenu.openEdit(player, itemId);
+                }
+            }
+        }
+    }
+
+    private void handleEmiliaAddEditItemMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
+        Inventory inv = event.getInventory();
+        int slot = event.getRawSlot();
+        boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
+        boolean isEditMode = title.equals("Edit Emilia Item");
+
+        if (isTopInventory) {
+            // Allow placing items in slots 0-9 (required items) and slot 13 (result item)
+            if ((slot >= 0 && slot <= 9) || slot == 13) {
+                // Handle placeholder removal
+                if (clickedItem != null && itemName != null) {
+                    Material mat = clickedItem.getType();
+                    if (mat == Material.GRAY_STAINED_GLASS_PANE || mat == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+                        // Remove placeholder
+                        inv.setItem(slot, null);
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+                // Allow item placement/removal
+                event.setCancelled(false);
+                return;
+            }
+
+            // Handle cost and daily limit buttons
+            if (itemName == null) return;
+
+            switch (slot) {
+                case 11: // Cost
+                    EmiliaAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                    ChatListener.setPlayerState(player.getUniqueId(), "entering_cost");
+                    player.sendMessage(ChatColor.YELLOW + "Please enter the cost (e.g. 500, 500k, 1m).");
+                    player.closeInventory();
+                    break;
+
+                case 15: // Daily Limit
+                    EmiliaAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                    ChatListener.setPlayerState(player.getUniqueId(), "entering_emilia_daily_limit");
+                    player.sendMessage(ChatColor.YELLOW + "Please enter the daily limit (0 = no limit).");
+                    player.closeInventory();
+                    break;
+
+                case 22: // Save
+                    if (isEditMode) {
+                        updateEmiliaItem(player, inv);
+                    } else {
+                        saveEmiliaItem(player, inv);
+                    }
+                    break;
+
+                case 23: // Delete (only in edit mode)
+                    if (isEditMode && itemName.equals("Delete")) {
+                        deleteEmiliaItem(player);
+                    }
+                    break;
+
+                case 24: // Back
+                    goBackFromEmiliaAdd(player);
+                    break;
+            }
+        } else {
+            // Clicking in player inventory
+            event.setCancelled(false);
+        }
+    }
+
+    private void saveEmiliaItem(Player player, Inventory inv) {
+        String category = EmiliaAddItemMenu.getCategory(player.getUniqueId());
+        if (category == null) {
+            player.sendMessage(ChatColor.RED + "Category not found.");
+            return;
+        }
+
+        ItemStack item = inv.getItem(13);
+        if (item == null || item.getType() == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+            player.sendMessage(ChatColor.RED + "You must set an item!");
+            return;
+        }
+
+        // Get next available slot
+        int nextSlot = 0;
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT MAX(slot) FROM emilia_items WHERE category = ?")) {
+            ps.setString(1, category);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next() && rs.getObject(1) != null) {
+                nextSlot = rs.getInt(1) + 1;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error determining slot position.");
+            return;
+        }
+
+        double cost = TemporaryData.getCost(player.getUniqueId());
+        int dailyLimit = 0;
+        Object limitObj = TemporaryData.getPlayerData(player.getUniqueId(), "emilia_daily_limit");
+        if (limitObj instanceof Integer) {
+            dailyLimit = (Integer) limitObj;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO emilia_items (category, slot, required_item_1, required_item_2, required_item_3, " +
+                     "required_item_4, required_item_5, required_item_6, required_item_7, required_item_8, " +
+                     "required_item_9, required_item_10, item, cost, daily_limit) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+
+            ps.setString(1, category);
+            ps.setInt(2, nextSlot);
+
+            // Required items (slots 0-9)
+            for (int i = 0; i < 10; i++) {
+                ItemStack requiredItem = inv.getItem(i);
+                if (requiredItem != null && requiredItem.getType() != Material.GRAY_STAINED_GLASS_PANE) {
+                    ps.setString(i + 3, ItemStackSerializer.serialize(requiredItem));
+                } else {
+                    ps.setString(i + 3, null);
+                }
+            }
+
+            ps.setString(13, ItemStackSerializer.serialize(item));
+            ps.setDouble(14, cost);
+            ps.setInt(15, dailyLimit);
+
+            ps.executeUpdate();
+            player.sendMessage(ChatColor.GREEN + "Item has been added to the shop.");
+
+            // Clear temporary data
+            TemporaryData.removeCost(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "emilia_daily_limit");
+            EmiliaAddItemMenu.removeGuiState(player.getUniqueId());
+
+            // Return to shop items menu
+            goBackFromEmiliaAdd(player);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error saving item to database.");
+        }
+    }
+
+    private void updateEmiliaItem(Player player, Inventory inv) {
+        int itemId = EmiliaAddItemMenu.getEditItemId(player.getUniqueId());
+        if (itemId == -1) {
+            player.sendMessage(ChatColor.RED + "Item ID not found.");
+            return;
+        }
+
+        ItemStack item = inv.getItem(13);
+        if (item == null || item.getType() == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+            player.sendMessage(ChatColor.RED + "You must set an item!");
+            return;
+        }
+
+        double cost = TemporaryData.getCost(player.getUniqueId());
+        int dailyLimit = 0;
+        Object limitObj = TemporaryData.getPlayerData(player.getUniqueId(), "emilia_daily_limit");
+        if (limitObj instanceof Integer) {
+            dailyLimit = (Integer) limitObj;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE emilia_items SET required_item_1 = ?, required_item_2 = ?, required_item_3 = ?, " +
+                     "required_item_4 = ?, required_item_5 = ?, required_item_6 = ?, required_item_7 = ?, " +
+                     "required_item_8 = ?, required_item_9 = ?, required_item_10 = ?, " +
+                     "item = ?, cost = ?, daily_limit = ? WHERE id = ?")) {
+
+            // Required items (slots 0-9)
+            for (int i = 0; i < 10; i++) {
+                ItemStack requiredItem = inv.getItem(i);
+                if (requiredItem != null && requiredItem.getType() != Material.GRAY_STAINED_GLASS_PANE) {
+                    ps.setString(i + 1, ItemStackSerializer.serialize(requiredItem));
+                } else {
+                    ps.setString(i + 1, null);
+                }
+            }
+
+            ps.setString(11, ItemStackSerializer.serialize(item));
+            ps.setDouble(12, cost);
+            ps.setInt(13, dailyLimit);
+            ps.setInt(14, itemId);
+
+            int updated = ps.executeUpdate();
+            if (updated > 0) {
+                player.sendMessage(ChatColor.GREEN + "Item has been updated.");
+            } else {
+                player.sendMessage(ChatColor.RED + "Item not found in database.");
+            }
+
+            // Clear temporary data
+            TemporaryData.removeCost(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "emilia_daily_limit");
+            EmiliaAddItemMenu.removeGuiState(player.getUniqueId());
+            EmiliaAddItemMenu.removeEditItemId(player.getUniqueId());
+
+            // Return to shop items menu
+            goBackFromEmiliaAdd(player);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error updating item in database.");
+        }
+    }
+
+    private void deleteEmiliaItem(Player player) {
+        int itemId = EmiliaAddItemMenu.getEditItemId(player.getUniqueId());
+        if (itemId == -1) {
+            player.sendMessage(ChatColor.RED + "Item ID not found.");
+            return;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM emilia_items WHERE id = ?")) {
+
+            ps.setInt(1, itemId);
+            int deleted = ps.executeUpdate();
+
+            if (deleted > 0) {
+                player.sendMessage(ChatColor.GREEN + "Item has been deleted.");
+            } else {
+                player.sendMessage(ChatColor.RED + "Item not found in database.");
+            }
+
+            // Clear temporary data
+            TemporaryData.removeCost(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "emilia_daily_limit");
+            EmiliaAddItemMenu.removeGuiState(player.getUniqueId());
+            EmiliaAddItemMenu.removeEditItemId(player.getUniqueId());
+
+            // Return to shop items menu
+            goBackFromEmiliaAdd(player);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error deleting item from database.");
+        }
+    }
+
+    private void goBackFromEmiliaAdd(Player player) {
+        String category = EmiliaAddItemMenu.getCategory(player.getUniqueId());
+        if (category != null) {
+            String[] parts = category.split("_");
+            if (parts.length >= 3) {
+                String shopType = parts[1].equals("shop") ? "Shop" : "Event Shop";
+                String tierType = capitalizeFirstLetter(parts[parts.length - 1]);
+
+                EmiliaShopItemsMenu.openEditor(player, shopType, tierType, 0);
+                EmiliaAddItemMenu.removeCategory(player.getUniqueId());
+            } else {
+                player.closeInventory();
+            }
+        } else {
+            player.closeInventory();
+        }
+    }
+
+    private String capitalizeFirstLetter(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
+    }
+
+    // Zumpe Shop handlers
+
+    private void handleZumpeShopMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        // Handle clicks in the Zumpe shop menu
+        // Since Zumpe shop opens directly without categories, we can handle item purchases here
+
+        // Check if the clicked item is a shop item (not a glass pane)
+        if (clickedItem != null && clickedItem.getType() != Material.BLACK_STAINED_GLASS_PANE) {
+            ItemMeta meta = clickedItem.getItemMeta();
+            if (meta != null) {
+                NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_id");
+                if (meta.getPersistentDataContainer().has(key, PersistentDataType.INTEGER)) {
+                    int itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+
+                    // Use UnifiedConfirmationMenu
+                    UnifiedConfirmationMenu.open(player, itemId, UnifiedConfirmationMenu.ShopType.ZUMPE);
+
+                    if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                        Bukkit.getLogger().info("[MenuListener] Opening unified confirmation for Zumpe item: " + itemId);
+                    }
+                }
+            }
+        }
+    }
+
+    private void handleEditZumpeShopMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        // Handle clicks in the edit mode of Zumpe shop
+
+        if (itemName.equals("Add Item")) {
+            // Open add item menu
+            ZumpeAddItemMenu.open(player);
+            return;
+        }
+
+        // Check if the clicked item is a shop item (not a glass pane)
+        if (clickedItem != null && clickedItem.getType() != Material.BLACK_STAINED_GLASS_PANE) {
+            ItemMeta meta = clickedItem.getItemMeta();
+            if (meta != null) {
+                NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_id");
+                if (meta.getPersistentDataContainer().has(key, PersistentDataType.INTEGER)) {
+                    int itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+                    // Open edit item menu
+                    ZumpeAddItemMenu.openEdit(player, itemId);
+                }
+            }
+        }
+    }
+
+    private void handleZumpeAddEditItemMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
+        Inventory inv = event.getInventory();
+        int slot = event.getRawSlot();
+        boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
+        boolean isEditMode = title.equals("Edit Zumpe Item");
+
+        if (isTopInventory) {
+            // Allow placing items in slots 0-9 (required items) and slot 13 (result item)
+            if ((slot >= 0 && slot <= 9) || slot == 13) {
+                // Handle placeholder removal
+                if (clickedItem != null && itemName != null) {
+                    Material mat = clickedItem.getType();
+                    if (mat == Material.GRAY_STAINED_GLASS_PANE || mat == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+                        // Remove placeholder
+                        inv.setItem(slot, null);
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+                // Allow item placement/removal
+                event.setCancelled(false);
+                return;
+            }
+
+            // Handle cost and daily limit buttons
+            if (itemName == null) return;
+
+            switch (slot) {
+                case 11: // Cost
+                    ZumpeAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                    ChatListener.setPlayerState(player.getUniqueId(), "entering_cost");
+                    player.sendMessage(ChatColor.YELLOW + "Please enter the cost (e.g. 500, 500k, 1m).");
+                    player.closeInventory();
+                    break;
+
+                case 15: // Daily Limit
+                    ZumpeAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                    ChatListener.setPlayerState(player.getUniqueId(), "entering_zumpe_daily_limit");
+                    player.sendMessage(ChatColor.YELLOW + "Please enter the daily limit (0 = no limit).");
+                    player.closeInventory();
+                    break;
+
+                case 22: // Save
+                    if (isEditMode) {
+                        updateZumpeItem(player, inv);
+                    } else {
+                        saveZumpeItem(player, inv);
+                    }
+                    break;
+
+                case 23: // Delete (only in edit mode)
+                    if (isEditMode && itemName.equals("Delete")) {
+                        deleteZumpeItem(player);
+                    }
+                    break;
+
+                case 24: // Back
+                    player.closeInventory();
+                    ZumpeMainMenu.openEditor(player);
+                    break;
+            }
+        } else {
+            // Clicking in player inventory
+            event.setCancelled(false);
+        }
+    }
+
+    private void saveZumpeItem(Player player, Inventory inv) {
+        ItemStack item = inv.getItem(13);
+        if (item == null || item.getType() == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+            player.sendMessage(ChatColor.RED + "You must set an item!");
+            return;
+        }
+
+        // Get next available slot
+        int nextSlot = 0;
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT MAX(slot) FROM zumpe_items")) {
+            ResultSet rs = ps.executeQuery();
+            if (rs.next() && rs.getObject(1) != null) {
+                nextSlot = rs.getInt(1) + 1;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error determining slot position.");
+            return;
+        }
+
+        double cost = TemporaryData.getCost(player.getUniqueId());
+        int dailyLimit = 0;
+        Object limitObj = TemporaryData.getPlayerData(player.getUniqueId(), "zumpe_daily_limit");
+        if (limitObj instanceof Integer) {
+            dailyLimit = (Integer) limitObj;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO zumpe_items (slot, required_item_1, required_item_2, required_item_3, " +
+                     "required_item_4, required_item_5, required_item_6, required_item_7, required_item_8, " +
+                     "required_item_9, required_item_10, item, cost, daily_limit) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+
+            ps.setInt(1, nextSlot);
+
+            // Required items (slots 0-9)
+            for (int i = 0; i < 10; i++) {
+                ItemStack requiredItem = inv.getItem(i);
+                if (requiredItem != null && requiredItem.getType() != Material.GRAY_STAINED_GLASS_PANE) {
+                    ps.setString(i + 2, ItemStackSerializer.serialize(requiredItem));
+                } else {
+                    ps.setString(i + 2, null);
+                }
+            }
+
+            ps.setString(12, ItemStackSerializer.serialize(item));
+            ps.setDouble(13, cost);
+            ps.setInt(14, dailyLimit);
+
+            ps.executeUpdate();
+            player.sendMessage(ChatColor.GREEN + "Item has been added to the shop.");
+
+            // Clear temporary data
+            TemporaryData.removeCost(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "zumpe_daily_limit");
+            ZumpeAddItemMenu.removeGuiState(player.getUniqueId());
+
+            // Return to shop menu
+            player.closeInventory();
+            ZumpeMainMenu.openEditor(player);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error saving item to database.");
+        }
+    }
+
+    private void updateZumpeItem(Player player, Inventory inv) {
+        int itemId = ZumpeAddItemMenu.getEditItemId(player.getUniqueId());
+        if (itemId == -1) {
+            player.sendMessage(ChatColor.RED + "Item ID not found.");
+            return;
+        }
+
+        ItemStack item = inv.getItem(13);
+        if (item == null || item.getType() == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+            player.sendMessage(ChatColor.RED + "You must set an item!");
+            return;
+        }
+
+        double cost = TemporaryData.getCost(player.getUniqueId());
+        int dailyLimit = 0;
+        Object limitObj = TemporaryData.getPlayerData(player.getUniqueId(), "zumpe_daily_limit");
+        if (limitObj instanceof Integer) {
+            dailyLimit = (Integer) limitObj;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE zumpe_items SET required_item_1 = ?, required_item_2 = ?, required_item_3 = ?, " +
+                     "required_item_4 = ?, required_item_5 = ?, required_item_6 = ?, required_item_7 = ?, " +
+                     "required_item_8 = ?, required_item_9 = ?, required_item_10 = ?, " +
+                     "item = ?, cost = ?, daily_limit = ? WHERE id = ?")) {
+
+            // Required items (slots 0-9)
+            for (int i = 0; i < 10; i++) {
+                ItemStack requiredItem = inv.getItem(i);
+                if (requiredItem != null && requiredItem.getType() != Material.GRAY_STAINED_GLASS_PANE) {
+                    ps.setString(i + 1, ItemStackSerializer.serialize(requiredItem));
+                } else {
+                    ps.setString(i + 1, null);
+                }
+            }
+
+            ps.setString(11, ItemStackSerializer.serialize(item));
+            ps.setDouble(12, cost);
+            ps.setInt(13, dailyLimit);
+            ps.setInt(14, itemId);
+
+            int updated = ps.executeUpdate();
+            if (updated > 0) {
+                player.sendMessage(ChatColor.GREEN + "Item has been updated.");
+            } else {
+                player.sendMessage(ChatColor.RED + "Item not found in database.");
+            }
+
+            // Clear temporary data
+            TemporaryData.removeCost(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "zumpe_daily_limit");
+            ZumpeAddItemMenu.removeGuiState(player.getUniqueId());
+            ZumpeAddItemMenu.removeEditItemId(player.getUniqueId());
+
+            // Return to shop menu
+            player.closeInventory();
+            ZumpeMainMenu.openEditor(player);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error updating item in database.");
+        }
+    }
+
+    private void deleteZumpeItem(Player player) {
+        int itemId = ZumpeAddItemMenu.getEditItemId(player.getUniqueId());
+        if (itemId == -1) {
+            player.sendMessage(ChatColor.RED + "Item ID not found.");
+            return;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM zumpe_items WHERE id = ?")) {
+
+            ps.setInt(1, itemId);
+            int deleted = ps.executeUpdate();
+
+            if (deleted > 0) {
+                player.sendMessage(ChatColor.GREEN + "Item has been deleted.");
+            } else {
+                player.sendMessage(ChatColor.RED + "Item not found in database.");
+            }
+
+            // Clear temporary data
+            TemporaryData.removeCost(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "zumpe_daily_limit");
+            ZumpeAddItemMenu.removeGuiState(player.getUniqueId());
+            ZumpeAddItemMenu.removeEditItemId(player.getUniqueId());
+
+            // Return to shop menu
+            player.closeInventory();
+            ZumpeMainMenu.openEditor(player);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error deleting item from database.");
+        }
+    }
+
+    private void handleEmiliaConfirmationMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            // Return to shop items menu
+            String shopType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_shop_type");
+            String tierType = (String) TemporaryData.getPlayerData(player.getUniqueId(), "emilia_tier_type");
+            String category = "emilia_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
+            int currentPage = TemporaryData.getPage(player.getUniqueId(), category);
+            EmiliaShopItemsMenu.open(player, shopType, tierType, currentPage);
+        } else if (itemName.equals("Exchange") || itemName.equals("Craft")) { // Handle both button types
+            // Perform exchange with improved transaction manager
+            performEmiliaExchangeImproved(player, event.getInventory());
+        }
+    }
+
+    private void handleZumpeConfirmationMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            // Return to Zumpe shop
+            ZumpeMainMenu.open(player);
+        } else if (itemName.equals("Exchange") || itemName.equals("Craft")) { // Handle both button types
+            // Perform exchange with improved transaction manager
+            performZumpeExchangeImproved(player, event.getInventory());
+        }
+    }
+
+    private void performEmiliaExchange(Player player, Inventory inv) {
+        ItemStack resultItem = inv.getItem(22);
+        if (resultItem == null || resultItem.getType() == Material.AIR) {
+            player.sendMessage(ChatColor.RED + "Invalid item.");
+            return;
+        }
+
+        ItemMeta meta = resultItem.getItemMeta();
+        if (meta == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), "emilia_item_id");
+        Integer itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+
+        if (itemId == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        // Process the purchase
+        boolean success = EmiliaTransactionManager.processPurchase(player, itemId);
+        // Don't close inventory to allow multiple transactions
+    }
+
+    private void performEmiliaExchangeImproved(Player player, Inventory inv) {
+        ItemStack resultItem = inv.getItem(22);
+        if (resultItem == null || resultItem.getType() == Material.AIR) {
+            player.sendMessage(ChatColor.RED + "Invalid item.");
+            return;
+        }
+
+        ItemMeta meta = resultItem.getItemMeta();
+        if (meta == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), "emilia_item_id");
+        Integer itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+
+        if (itemId == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        // Debug mode
+        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+            Bukkit.getLogger().info("[MenuListener] Starting Emilia exchange for player: " + player.getName() + 
+                                  ", itemId: " + itemId);
+            ImprovedTransactionManager.testDailyLimit(player, itemId, "emilia");
+        }
+
+        // Process the purchase
+        boolean success = EmiliaTransactionManager.processPurchase(player, itemId);
+
+        // Debug message instead of closing inventory
+        if (success) {
+            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                Bukkit.getLogger().info("[Emilia] Exchange success - keeping menu open");
+            }
+
+            // Refresh the menu to show updated limits
+            UnifiedConfirmationMenu.refresh(player, itemId, UnifiedConfirmationMenu.ShopType.EMILIA);
+        }
+    }
+
+    private void performZumpeExchange(Player player, Inventory inv) {
+        ItemStack resultItem = inv.getItem(22);
+        if (resultItem == null || resultItem.getType() == Material.AIR) {
+            player.sendMessage(ChatColor.RED + "Invalid item.");
+            return;
+        }
+
+        ItemMeta meta = resultItem.getItemMeta();
+        if (meta == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), "zumpe_item_id");
+        Integer itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+
+        if (itemId == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        // Process the purchase
+        boolean success = ZumpeTransactionManager.processPurchase(player, itemId);
+        // Don't close inventory to allow multiple transactions
+    }
+
+    private void performZumpeExchangeImproved(Player player, Inventory inv) {
+        ItemStack resultItem = inv.getItem(22);
+        if (resultItem == null || resultItem.getType() == Material.AIR) {
+            player.sendMessage(ChatColor.RED + "Invalid item.");
+            return;
+        }
+
+        ItemMeta meta = resultItem.getItemMeta();
+        if (meta == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), "zumpe_item_id");
+        Integer itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+
+        if (itemId == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        // Debug mode
+        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+            Bukkit.getLogger().info("[MenuListener] Starting Zumpe exchange for player: " + player.getName() + 
+                                  ", itemId: " + itemId);
+            ImprovedTransactionManager.testDailyLimit(player, itemId, "zumpe");
+        }
+
+        // Process the purchase
+        boolean success = ZumpeTransactionManager.processPurchase(player, itemId);
+
+        // Debug message instead of closing inventory
+        if (success) {
+            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                Bukkit.getLogger().info("[Zumpe] Exchange success - keeping menu open");
+            }
+
+            // Refresh the menu to show updated limits
+            UnifiedConfirmationMenu.refresh(player, itemId, UnifiedConfirmationMenu.ShopType.ZUMPE);
         }
     }
 }

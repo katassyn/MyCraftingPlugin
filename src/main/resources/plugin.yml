@@ -19,6 +19,36 @@ commands:
   edit_alchemy:
     description: "Open Alchemy menu in edit mode"
     permission: mycraftingplugin.editlayout
+  jeweler:
+    description: "Opens the jeweler menu"
+    usage: /jeweler
+    permission: mycraftingplugin.use
+    aliases: [jew]
+  edit_jeweler:
+    description: "Opens the jeweler menu in edit mode"
+    usage: /edit_jeweler
+    permission: mycraftingplugin.editlayout
+  jewels_crushing:
+    description: "Opens the jewels crushing menu"
+    usage: /jewels_crushing
+    permission: mycraftingplugin.use
+    aliases: [crushingj, jcrushing]
+  emilia:
+    description: "Opens Emilia's shop menu"
+    usage: /emilia
+    permission: mycraftingplugin.use
+  edit_emilia:
+    description: "Opens Emilia's shop menu in edit mode"
+    usage: /edit_emilia
+    permission: mycraftingplugin.editlayout
+  zumpe:
+    description: "Opens Zumpe shop menu"
+    usage: /zumpe
+    permission: mycraftingplugin.use
+  edit_zumpe:
+    description: "Opens Zumpe shop menu in edit mode"
+    usage: /edit_zumpe
+    permission: mycraftingplugin.editlayout
 permissions:
   mycraftingplugin.use:
     description: Allows the player to use the crafting menu.
@@ -31,4 +61,10 @@ permissions:
     default: op
   mycraftingplugin.editlayout:
     description: Allows the player to edit the crafting menu layout.
+    default: op
+  mycraftingplugin.premium:
+    description: Allows the player to access premium tier items in Emilia shop.
+    default: op
+  mycraftingplugin.deluxe:
+    description: Allows the player to access deluxe tier items in Emilia shop.
     default: op
