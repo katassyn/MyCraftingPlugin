@@ -11,6 +11,8 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Calendar;
+import com.maks.mycraftingplugin2.integration.PouchIntegrationHelper;
+import com.maks.mycraftingplugin2.integration.PouchItemMappings;
 
 public class Main extends JavaPlugin {
 
@@ -29,6 +31,9 @@ public class Main extends JavaPlugin {
         setupDatabase();
         setupEconomy();
 
+        // Initialize Pouch integration
+        initializePouchIntegration();
+
         // Rejestracja komend
         getCommand("crafting").setExecutor(new CraftingCommand());
         getCommand("editcrafting").setExecutor(new EditCraftingCommand());
@@ -41,6 +46,8 @@ public class Main extends JavaPlugin {
         getCommand("edit_emilia").setExecutor(new EditEmiliaCommand());
         getCommand("zumpe").setExecutor(new ZumpeCommand());
         getCommand("edit_zumpe").setExecutor(new EditZumpeCommand());
+        getCommand("testjewels").setExecutor(new TestJewelsCommand());
+        getCommand("testpouch").setExecutor(new TestPouchCommand());
 
         // Rejestracja listenerów
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
@@ -277,5 +284,26 @@ public class Main extends JavaPlugin {
         }, initialDelay / 50, dayInTicks); // Convert ms to ticks
 
         getLogger().info("Scheduled shop transactions cleanup for " + nextRun.getTime());
+    }
+
+    /**
+     * Initialize the pouch integration
+     */
+    private void initializePouchIntegration() {
+        if (getServer().getPluginManager().getPlugin("IngredientPouchPlugin") != null) {
+            getLogger().info("IngredientPouchPlugin found! Enabling pouch integration...");
+
+            // The integration helper will initialize itself statically
+            // Just check if it's working
+            if (PouchIntegrationHelper.isAPIAvailable()) {
+                getLogger().info("Pouch integration successfully enabled!");
+                getLogger().info("Players can now use items from their ingredient pouches for crafting!");
+            } else {
+                getLogger().warning("IngredientPouchPlugin found but API initialization failed!");
+            }
+        } else {
+            getLogger().info("IngredientPouchPlugin not found. Pouch integration disabled.");
+            getLogger().info("Players will need items in their inventory for crafting.");
+        }
     }
 }

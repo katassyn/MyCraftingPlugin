@@ -4,3 +4,6 @@ database:
   name: "minecraft_crafting"
   user: "root"
   password: ""
+
+# Enable debug mode (1 = enabled, 0 = disabled)
+debug: 1

@@ -2,6 +2,7 @@ name: MyCraftingPlugin2
 version: '${project.version}'
 main: com.maks.mycraftingplugin2.Main
 api-version: '1.20'
+softdepend: [Vault, IngredientPouchPlugin]
 commands:
   crafting:
     description: Opens the crafting menu.
@@ -49,6 +50,14 @@ commands:
     description: "Opens Zumpe shop menu in edit mode"
     usage: /edit_zumpe
     permission: mycraftingplugin.editlayout
+  testjewels:
+    description: Test jewel detection system
+    usage: /<command> [help]
+    permission: mycraftingplugin.testjewels
+  testpouch:
+    description: Test pouch integration
+    usage: /<command> [check|inventory]
+    permission: mycraftingplugin.testpouch
 permissions:
   mycraftingplugin.use:
     description: Allows the player to use the crafting menu.
@@ -67,4 +76,10 @@ permissions:
     default: op
   mycraftingplugin.deluxe:
     description: Allows the player to access deluxe tier items in Emilia shop.
+    default: op
+  mycraftingplugin.testjewels:
+    description: Allows testing of jewel detection system
+    default: op
+  mycraftingplugin.testpouch:
+    description: Allows testing of pouch integration
     default: op

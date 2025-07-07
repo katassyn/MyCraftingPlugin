@@ -18,6 +18,30 @@ import java.util.List;
  */
 public class JewelsCrushingMenu {
 
+    private static final int debuggingFlag = 1; // Set to 0 to disable debug
+
+    /**
+     * List of all jewel names from jewele.yml (without tier indicators)
+     */
+    private static final List<String> JEWEL_NAMES = List.of(
+        "Emberfang Jewel",           // DMG jewel
+        "Windstep Sapphire",         // MOVE SPEED jewel
+        "Whirlwind Opal",            // ATTACK SPEED jewel
+        "Heartroot Ruby",            // HEALTH jewel
+        "Stonehide Garnet",          // ARMOR TOUGHNESS jewel
+        "Lasting Healing Jewel",     // LASTING HEALING jewel
+        "Amplified Healing Jewel",   // AMPLIFIED HEALING jewel
+        "Jewel of Focus",            // JEWEL OF FOCUS
+        "Jewel of Rage",             // JEWEL OF RAGE
+        "Steam Sale",                // STEAM SALE
+        "Phoenix Egg",               // PHOENIX jewel
+        "Shadowvein Crystal",        // ANDER jewel
+        "Sunspire Amber",            // CLOVER jewel
+        "Melonbane Prism",           // DRAKENMELON jewel
+        "Deathcut Garnet",           // COLLECTOR jewel
+        "Shadowpick Onyx"            // LOCKPICK jewel
+    );
+
     public static void open(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, "Jewels Crushing");
 
@@ -51,11 +75,15 @@ public class JewelsCrushingMenu {
             }
         }
 
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[JewelsCrushing] Opening crushing menu for player: " + player.getName());
+        }
+
         player.openInventory(inv);
     }
 
     /**
-     * Checks if an item is a jewel based on its display name.
+     * Enhanced jewel detection that works with all jewels from jewele.yml
      * @param item The item to check.
      * @return True if the item is a jewel, false otherwise.
      */
@@ -64,10 +92,58 @@ public class JewelsCrushingMenu {
             return false;
         }
 
-        String displayName = item.getItemMeta().getDisplayName();
-        // Check if it contains tier indicators [ I ], [ II ], or [ III ] and has "Jewel" in the name
-        return (displayName.contains("[ I ]") || displayName.contains("[ II ]") || 
-                displayName.contains("[ III ]")) && displayName.contains("Jewel");
+        ItemMeta meta = item.getItemMeta();
+        String displayName = meta.getDisplayName();
+        String cleanDisplayName = ChatColor.stripColor(displayName);
+
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[JewelsCrushing] Checking item: " + displayName);
+            Bukkit.getLogger().info("[JewelsCrushing] Clean name: " + cleanDisplayName);
+        }
+
+        // Check for tier indicators [ I ], [ II ], or [ III ]
+        boolean hasTierIndicator = cleanDisplayName.contains("[ I ]") || 
+                                  cleanDisplayName.contains("[ II ]") || 
+                                  cleanDisplayName.contains("[ III ]");
+
+        if (!hasTierIndicator) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[JewelsCrushing] No tier indicator found in: " + cleanDisplayName);
+            }
+            return false;
+        }
+
+        // Check if the clean name contains any of the known jewel names
+        boolean isKnownJewel = false;
+        String matchedJewelName = "";
+
+        for (String jewelName : JEWEL_NAMES) {
+            if (cleanDisplayName.contains(jewelName)) {
+                isKnownJewel = true;
+                matchedJewelName = jewelName;
+                break;
+            }
+        }
+
+        if (!isKnownJewel) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[JewelsCrushing] Item name does not match any known jewel names");
+            }
+            return false;
+        }
+
+        // Additional verification: check for DURABILITY enchantment (all jewels have this)
+        if (meta.hasEnchants() && meta.getEnchants().containsKey(Enchantment.DURABILITY)) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[JewelsCrushing] Valid jewel detected: " + matchedJewelName + " (tier " + getJewelTier(item) + ")");
+            }
+            return true;
+        }
+
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[JewelsCrushing] Item matches jewel name but has no DURABILITY enchantment: " + cleanDisplayName);
+        }
+        return false;
     }
 
     /**
@@ -100,6 +176,10 @@ public class JewelsCrushingMenu {
         int totalDust = 0;
         List<Integer> slotsToEmpty = new ArrayList<>();
 
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[JewelsCrushing] Processing jewels for player: " + player.getName());
+        }
+
         // Process the first two rows (0-17) where jewels can be placed
         for (int i = 0; i < 18; i++) {
             ItemStack item = inv.getItem(i);
@@ -107,12 +187,21 @@ public class JewelsCrushingMenu {
                 int tier = getJewelTier(item);
                 int amount = item.getAmount();
 
+                if (debuggingFlag == 1) {
+                    Bukkit.getLogger().info("[JewelsCrushing] Found jewel in slot " + i + 
+                                          ", tier: " + tier + ", amount: " + amount);
+                }
+
                 // Calculate dust based on tier
                 if (tier > 0) {
                     totalDust += tier * amount;
                     slotsToEmpty.add(i);
                 }
             }
+        }
+
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[JewelsCrushing] Total dust to give: " + totalDust);
         }
 
         if (totalDust > 0) {
@@ -131,19 +220,68 @@ public class JewelsCrushingMenu {
                 player.sendMessage(ChatColor.GREEN + "You crushed jewels and received " + 
                                   totalDust + " Jewel Dust!");
 
-                // NIE ZAMYKAMY GUI!
-                // Gracz może chcieć dodać więcej jeweli do crushingu
-
-                // Opcjonalnie odśwież inventory
-                player.updateInventory();
-
+                if (debuggingFlag == 1) {
+                    Bukkit.getLogger().info("[JewelsCrushing] Successfully gave " + totalDust + 
+                                          " jewel dust to " + player.getName());
+                }
             } else {
                 player.sendMessage(ChatColor.RED + "Your inventory is full! Make space before crushing jewels.");
-                // Również nie zamykamy GUI - gracz może zrobić miejsce i spróbować ponownie
+
+                if (debuggingFlag == 1) {
+                    Bukkit.getLogger().info("[JewelsCrushing] Player inventory full: " + player.getName());
+                }
             }
         } else {
             player.sendMessage(ChatColor.RED + "No valid jewels to crush!");
-            // Nie zamykamy GUI - gracz może dodać jewele
+
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[JewelsCrushing] No valid jewels found for: " + player.getName());
+            }
+        }
+    }
+
+    /**
+     * Returns all items from crushing slots to player's inventory
+     * @param player The player
+     * @param inv The crushing inventory
+     */
+    public static void returnItemsToPlayer(Player player, Inventory inv) {
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[JewelsCrushing] Returning items to player: " + player.getName());
+        }
+
+        List<ItemStack> itemsToReturn = new ArrayList<>();
+
+        // Collect items from first two rows (0-17)
+        for (int i = 0; i < 18; i++) {
+            ItemStack item = inv.getItem(i);
+            if (item != null && item.getType() != Material.AIR) {
+                itemsToReturn.add(item.clone());
+                inv.setItem(i, null);
+
+                if (debuggingFlag == 1) {
+                    Bukkit.getLogger().info("[JewelsCrushing] Found item in slot " + i + ": " + 
+                                          item.getType() + " x" + item.getAmount());
+                }
+            }
+        }
+
+        // Return items to player
+        for (ItemStack item : itemsToReturn) {
+            if (player.getInventory().firstEmpty() != -1) {
+                player.getInventory().addItem(item);
+            } else {
+                // Drop on ground if inventory full
+                player.getWorld().dropItemNaturally(player.getLocation(), item);
+                player.sendMessage(ChatColor.YELLOW + "Some items were dropped on the ground due to full inventory!");
+            }
+        }
+
+        if (!itemsToReturn.isEmpty()) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[JewelsCrushing] Returned " + itemsToReturn.size() + 
+                                      " items to " + player.getName());
+            }
         }
     }
 
@@ -161,11 +299,16 @@ public class JewelsCrushingMenu {
             java.lang.reflect.Method getItemMethod = itemManagerClass.getMethod("getItem", String.class, int.class);
             Object result = getItemMethod.invoke(null, "jewel_dust", amount);
             if (result instanceof ItemStack) {
+                if (debuggingFlag == 1) {
+                    Bukkit.getLogger().info("[JewelsCrushing] Got jewel_dust from ItemManager");
+                }
                 return (ItemStack) result;
             }
         } catch (Exception e) {
             // If the above fails, create a basic jewel dust item
-            Bukkit.getLogger().info("Could not get jewel_dust from ItemManager, creating basic item");
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[JewelsCrushing] Could not get jewel_dust from ItemManager, creating basic item: " + e.getMessage());
+            }
         }
 
         // Create a basic Jewel Dust item
@@ -190,6 +333,65 @@ public class JewelsCrushingMenu {
 
             dust.setItemMeta(meta);
         }
+
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[JewelsCrushing] Created basic jewel dust item");
+        }
+
         return dust;
+    }
+
+    /**
+     * Test method to check if jewel detection works properly
+     * @param player The player to send test results to
+     */
+    public static void testJewelDetection(Player player) {
+        if (debuggingFlag != 1) {
+            player.sendMessage(ChatColor.RED + "Debug mode is disabled. Enable debuggingFlag to use this test.");
+            return;
+        }
+
+        player.sendMessage(ChatColor.YELLOW + "=== JEWEL DETECTION TEST ===");
+
+        // Test all items in player's inventory
+        int jewelCount = 0;
+        int totalItems = 0;
+
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() != Material.AIR) {
+                totalItems++;
+                boolean isDetectedAsJewel = isJewel(item);
+
+                if (isDetectedAsJewel) {
+                    jewelCount++;
+                    int tier = getJewelTier(item);
+                    String name = item.hasItemMeta() && item.getItemMeta().hasDisplayName() 
+                        ? ChatColor.stripColor(item.getItemMeta().getDisplayName()) 
+                        : item.getType().toString();
+
+                    player.sendMessage(ChatColor.GREEN + "✓ JEWEL: " + name + " (Tier " + tier + ")");
+                } else {
+                    String name = item.hasItemMeta() && item.getItemMeta().hasDisplayName() 
+                        ? ChatColor.stripColor(item.getItemMeta().getDisplayName()) 
+                        : item.getType().toString();
+
+                    // Only show non-jewels if they have tier indicators (might be false negatives)
+                    if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+                        String displayName = item.getItemMeta().getDisplayName();
+                        if (displayName.contains("[ I ]") || displayName.contains("[ II ]") || displayName.contains("[ III ]")) {
+                            player.sendMessage(ChatColor.RED + "✗ NOT JEWEL: " + name + " (has tier indicator!)");
+                        }
+                    }
+                }
+            }
+        }
+
+        player.sendMessage(ChatColor.YELLOW + "=== TEST RESULTS ===");
+        player.sendMessage(ChatColor.WHITE + "Total items checked: " + totalItems);
+        player.sendMessage(ChatColor.GREEN + "Jewels detected: " + jewelCount);
+        player.sendMessage(ChatColor.YELLOW + "========================");
+
+        Bukkit.getLogger().info("[JewelsCrushing] Test completed for " + player.getName() + 
+                              " - " + jewelCount + "/" + totalItems + " items detected as jewels");
     }
 }

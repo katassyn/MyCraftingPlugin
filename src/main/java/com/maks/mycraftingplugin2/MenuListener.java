@@ -1,5 +1,6 @@
 package com.maks.mycraftingplugin2;
 
+import com.maks.mycraftingplugin2.integration.PouchIntegrationHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -8,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -20,6 +22,57 @@ import java.lang.reflect.InvocationTargetException;
 
 public class MenuListener implements Listener {
 
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        Player player = (Player) event.getPlayer();
+        String title = event.getView().getTitle();
+
+        // Debugging flag
+        int debuggingFlag = 1; // Set to 0 to disable debug
+
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[MenuListener] InventoryCloseEvent - Title: " + title + 
+                              ", Player: " + player.getName());
+        }
+
+        // Handle Jewels Crushing menu closure
+        if (title.equals("Jewels Crushing")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Handling Jewels Crushing menu close for: " + player.getName());
+            }
+
+            // Return all items from crushing slots to player
+            JewelsCrushingMenu.returnItemsToPlayer(player, event.getInventory());
+        }
+
+        // Handle other menus that might need item protection
+        else if (title.equals("Add New Recipe") || title.equals("Edit Recipe")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Handling Recipe menu close for: " + player.getName());
+            }
+
+            // Save GUI state for recipe menus
+            AddRecipeMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+        }
+
+        else if (title.equals("Add Emilia Item") || title.equals("Edit Emilia Item")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Handling Emilia item menu close for: " + player.getName());
+            }
+
+            // Save GUI state for Emilia menus
+            EmiliaAddItemMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+        }
+
+        else if (title.equals("Add Zumpe Item") || title.equals("Edit Zumpe Item")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Handling Zumpe item menu close for: " + player.getName());
+            }
+
+            // Save GUI state for Zumpe menus
+            ZumpeAddItemMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+        }
+    }
 
     @EventHandler
     public void onMenuClick(InventoryClickEvent event) {
@@ -487,6 +540,7 @@ public class MenuListener implements Listener {
     // Metoda performCrafting
     private void performCrafting(Player player, Inventory inv) {
         try {
+            // Pobierz przedmiot wynikowy ze slotu 22
             ItemStack resultItem = inv.getItem(22);
             if (resultItem == null || resultItem.getType() == Material.AIR) {
                 player.sendMessage(ChatColor.RED + "Invalid recipe.");
@@ -499,12 +553,17 @@ public class MenuListener implements Listener {
                 return;
             }
 
+            // Pobierz recipe ID z PersistentDataContainer
             NamespacedKey key = new NamespacedKey(Main.getInstance(), "recipe_id");
             Integer recipeId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
 
             if (recipeId == null) {
                 player.sendMessage(ChatColor.RED + "Recipe not found.");
                 return;
+            }
+
+            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                Bukkit.getLogger().info("[Crafting] Processing recipe ID: " + recipeId);
             }
 
             try (Connection conn = Main.getConnection();
@@ -514,17 +573,34 @@ public class MenuListener implements Listener {
                 ResultSet rs = ps.executeQuery();
 
                 if (rs.next()) {
-                    // Check if the player has the required items
+                    // Sprawdź czy gracz ma wymagane przedmioty
                     boolean hasItems = true;
                     Map<Integer, ItemStack> requiredItems = new HashMap<>();
+
                     for (int i = 0; i < 10; i++) {
                         String itemData = rs.getString("required_item_" + (i + 1));
                         if (itemData != null) {
                             ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
-                            requiredItems.put(i, requiredItem);
-                            if (getTotalItemAmount(player, requiredItem) < requiredItem.getAmount()) {
-                                hasItems = false;
-                                break;
+                            if (requiredItem != null) {
+                                requiredItems.put(i, requiredItem);
+
+                                // Użyj PouchIntegrationHelper
+                                int totalAmount = PouchIntegrationHelper.getTotalItemAmount(player, requiredItem);
+                                int neededAmount = PouchIntegrationHelper.getActualItemAmount(requiredItem);
+
+                                if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                                    Bukkit.getLogger().info("[Crafting] Checking item: " + 
+                                        PouchIntegrationHelper.getItemName(requiredItem) + 
+                                        " - Has: " + totalAmount + ", Needs: " + neededAmount);
+                                }
+
+                                if (totalAmount < neededAmount) {
+                                    hasItems = false;
+                                    player.sendMessage(ChatColor.RED + "Missing: " + 
+                                        PouchIntegrationHelper.getItemName(requiredItem) + 
+                                        " x" + (neededAmount - totalAmount));
+                                    break;
+                                }
                             }
                         }
                     }
@@ -534,31 +610,22 @@ public class MenuListener implements Listener {
                         return;
                     }
 
-                    // Check if the player has enough money
+                    // Sprawdź czy gracz ma wystarczająco pieniędzy
                     double cost = rs.getDouble("cost");
 
-                    // Sprawdź czy jest dostępne API TrinketsPlugin
+                    // Sprawdź zniżkę Steam Sale
                     double discountMultiplier = 1.0;
-
                     try {
-                        // Próba użycia JewelAPI
                         Class<?> jewelAPIClass = Class.forName("com.maks.trinketsplugin.JewelAPI");
                         Method getCraftingDiscountMethod = jewelAPIClass.getMethod("getCraftingDiscount", Player.class);
                         Object result = getCraftingDiscountMethod.invoke(null, player);
                         if (result instanceof Double) {
                             discountMultiplier = (Double) result;
-                            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
-                                Main.getInstance().getLogger().info("Applied crafting discount from Steam Sale Jewel: " + discountMultiplier);
-                            }
                         }
-                    } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                        // API Niedostępne, używamy domyślnego mnożnika 1.0
-                        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
-                            Main.getInstance().getLogger().warning("TrinketsPlugin JewelAPI not available: " + e.getMessage());
-                        }
+                    } catch (Exception e) {
+                        // API niedostępne, używamy domyślnego mnożnika
                     }
 
-                    // Zastosuj zniżkę do kosztu
                     double finalCost = cost * discountMultiplier;
 
                     if (Main.getEconomy().getBalance(player) < finalCost) {
@@ -566,36 +633,151 @@ public class MenuListener implements Listener {
                         return;
                     }
 
-                    // Remove items from the player
+                    // Pobierz przedmiot wynikowy z bazy danych
+                    String resultItemData = rs.getString("result_item");
+                    ItemStack craftedItem = ItemStackSerializer.deserialize(resultItemData);
+                    if (craftedItem == null) {
+                        player.sendMessage(ChatColor.RED + "Error loading result item!");
+                        return;
+                    }
+
+                    // Sprawdź czy gracz ma miejsce w ekwipunku
+                    if (player.getInventory().firstEmpty() == -1) {
+                        player.sendMessage(ChatColor.RED + "Your inventory is full!");
+                        return;
+                    }
+
+                    // Usuń przedmioty od gracza - ATOMOWO!
+                    boolean allItemsRemoved = true;
+                    List<ItemStack> removedItems = new ArrayList<>(); // Lista usuniętych przedmiotów dla rollbacku
+
+                    // Group required items by base name and calculate total units needed
+                    Map<String, Integer> totalUnitsNeeded = new HashMap<>();
+                    Map<String, ItemStack> baseItemSamples = new HashMap<>();
+
                     for (ItemStack requiredItem : requiredItems.values()) {
-                        removeItems(player, requiredItem);
+                        String baseName = PouchIntegrationHelper.getBaseItemName(requiredItem);
+                        int unitsNeeded = PouchIntegrationHelper.getActualItemAmount(requiredItem);
+
+                        // Add to total units needed for this base item
+                        totalUnitsNeeded.put(baseName, totalUnitsNeeded.getOrDefault(baseName, 0) + unitsNeeded);
+
+                        // Keep a sample of this item for later use
+                        if (!baseItemSamples.containsKey(baseName)) {
+                            baseItemSamples.put(baseName, requiredItem.clone());
+                        }
+
+                        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                            Bukkit.getLogger().info("[Crafting] Grouped: " + baseName + 
+                                " - Added " + unitsNeeded + " units, total now: " + totalUnitsNeeded.get(baseName));
+                        }
                     }
 
-                    // Informacja o zniżce
-                    if (discountMultiplier < 1.0) {
-                        player.sendMessage(ChatColor.GOLD + "Your Merchant Jewel gave you a " + 
-                                (int)((1.0 - discountMultiplier) * 100) + "% discount!");
+                    // Remove items in consolidated operations
+                    for (Map.Entry<String, Integer> entry : totalUnitsNeeded.entrySet()) {
+                        String baseName = entry.getKey();
+                        int unitsNeeded = entry.getValue();
+                        ItemStack sampleItem = baseItemSamples.get(baseName);
+
+                        // Create a new item with the total units needed
+                        ItemStack consolidatedItem = sampleItem.clone();
+                        consolidatedItem.setAmount(1); // Will be multiplied by stack multiplier
+
+                        // Set the appropriate multiplier in the name
+                        ItemMeta itemMeta = consolidatedItem.getItemMeta();
+                        if (unitsNeeded >= 1000 && unitsNeeded % 1000 == 0) {
+                            itemMeta.setDisplayName(baseName + " x1000");
+                            consolidatedItem.setAmount(unitsNeeded / 1000);
+                        } else if (unitsNeeded >= 100 && unitsNeeded % 100 == 0) {
+                            itemMeta.setDisplayName(baseName + " x100");
+                            consolidatedItem.setAmount(unitsNeeded / 100);
+                        } else {
+                            itemMeta.setDisplayName(baseName);
+                            consolidatedItem.setAmount(unitsNeeded);
+                        }
+                        consolidatedItem.setItemMeta(itemMeta);
+
+                        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                            Bukkit.getLogger().info("[Crafting] Removing consolidated: " + 
+                                PouchIntegrationHelper.getItemName(consolidatedItem) + " x" + 
+                                consolidatedItem.getAmount() + " (" + unitsNeeded + " units)");
+                        }
+
+                        // Remove the consolidated item
+                        PouchIntegrationHelper.RemovalResult result = PouchIntegrationHelper.removeItems(player, consolidatedItem);
+                        if (!result.success) {
+                            allItemsRemoved = false;
+
+                            if (result.errorMessage != null && result.errorMessage.startsWith("Not enough")) {
+                                player.sendMessage(ChatColor.RED + "You don't have enough " + 
+                                    PouchIntegrationHelper.getItemName(consolidatedItem) + 
+                                    "! Required: " + result.required + ", Available: " + result.available);
+                            } else {
+                                player.sendMessage(ChatColor.RED + "Error removing items! Transaction cancelled.");
+                            }
+
+                            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                                Bukkit.getLogger().warning("[Crafting] Failed to remove: " + 
+                                    PouchIntegrationHelper.getItemName(consolidatedItem) + " x" + 
+                                    PouchIntegrationHelper.getActualItemAmount(consolidatedItem) + 
+                                    (result.errorMessage != null ? " - " + result.errorMessage : ""));
+                            }
+
+                            // Przywróć wcześniej usunięte przedmioty
+                            for (ItemStack removedItem : removedItems) {
+                                player.getInventory().addItem(removedItem.clone());
+
+                                if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                                    Bukkit.getLogger().info("[Crafting] Rollback: Returned " + 
+                                        PouchIntegrationHelper.getItemName(removedItem) + " x" + 
+                                        PouchIntegrationHelper.getActualItemAmount(removedItem));
+                                }
+                            }
+
+                            break;
+                        }
+
+                        // Zapisz usunięty przedmiot dla ewentualnego rollbacku
+                        removedItems.add(consolidatedItem.clone());
+
+                        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                            Bukkit.getLogger().info("[Crafting] Removed: " + 
+                                PouchIntegrationHelper.getItemName(consolidatedItem) + " x" + 
+                                PouchIntegrationHelper.getActualItemAmount(consolidatedItem));
+                        }
                     }
 
-                    // Deduct the cost (zaktualizowana linijka - pobierz odjąć skorygowany koszt)
-                    Main.getEconomy().withdrawPlayer(player, finalCost);
+                    if (!allItemsRemoved) {
+                        player.sendMessage(ChatColor.RED + "Transaction failed! All items have been returned to your inventory.");
+                        return;
+                    }
 
-                    // Calculate success chance
+                    // Pobierz pieniądze
+                    if (finalCost > 0) {
+                        Main.getEconomy().withdrawPlayer(player, finalCost);
+                        if (discountMultiplier < 1.0) {
+                            player.sendMessage(ChatColor.GOLD + "Your Merchant Jewel gave you a " + 
+                                    (int)((1.0 - discountMultiplier) * 100) + "% discount!");
+                        }
+                    }
+
+                    // Oblicz szansę na sukces
                     double successChance = rs.getDouble("success_chance");
                     if (Math.random() * 100 <= successChance) {
-                        // Success - give the item to the player
-                        player.getInventory().addItem(resultItem);
+                        // Sukces - daj przedmiot graczowi
+                        player.getInventory().addItem(craftedItem);
                         player.sendMessage(ChatColor.GREEN + "Crafting successful!");
 
                         if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
-                            Bukkit.getLogger().info("[Crafting] Success - keeping menu open");
+                            Bukkit.getLogger().info("[Crafting] Success - crafted: " + 
+                                PouchIntegrationHelper.getItemName(craftedItem));
                         }
-
-                        // Opcjonalnie możesz odświeżyć przycisk Craft aby pokazać aktualny koszt
-                        // (jeśli gracz ma mniej pieniędzy po craftingu)
-
                     } else {
                         player.sendMessage(ChatColor.RED + "Crafting failed.");
+
+                        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                            Bukkit.getLogger().info("[Crafting] Failed - success chance was: " + successChance + "%");
+                        }
                     }
                 } else {
                     player.sendMessage(ChatColor.RED + "Recipe not found.");
@@ -1001,17 +1183,40 @@ public class MenuListener implements Listener {
         int slot = event.getRawSlot();
         Inventory inv = event.getInventory();
 
-        // This is crucial - needed to properly handle click and drag events
+        // Debugging flag
+        int debuggingFlag = 1; // Set to 0 to disable debug
+
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[MenuListener] JewelsCrushing click - Slot: " + slot + 
+                                  ", Action: " + event.getAction() + 
+                                  ", Click: " + event.getClick() + 
+                                  ", Player: " + player.getName());
+        }
+
+        // Check if the clicked inventory is null
         if (event.getClickedInventory() == null) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Clicked inventory is null");
+            }
             return;
         }
 
         // Allow placing/removing items in first two rows (slots 0-17)
         if (slot < 18 && event.getClickedInventory().equals(event.getView().getTopInventory())) {
-            // Check if the player is adding a jewel
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Click in jewel placement area, slot: " + slot);
+            }
+
+            // Handle different click types
             if (event.getAction().name().contains("PLACE")) {
                 ItemStack cursor = event.getCursor();
                 if (cursor != null && cursor.getType() != Material.AIR) {
+                    if (debuggingFlag == 1) {
+                        Bukkit.getLogger().info("[MenuListener] Placing item: " + cursor.getType() + 
+                                              " with name: " + (cursor.hasItemMeta() && cursor.getItemMeta().hasDisplayName() ? 
+                                              cursor.getItemMeta().getDisplayName() : "No name"));
+                    }
+
                     // Check if it's a valid jewel
                     if (!JewelsCrushingMenu.isJewel(cursor)) {
                         player.sendMessage(ChatColor.RED + "You can only place jewels here!");
@@ -1020,6 +1225,49 @@ public class MenuListener implements Listener {
                     }
                 }
             }
+
+            // Handle shift-click from player inventory
+            else if (event.getAction().name().contains("SHIFT") && 
+                    event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+                ItemStack currentItem = event.getCurrentItem();
+                if (currentItem != null && currentItem.getType() != Material.AIR) {
+                    if (debuggingFlag == 1) {
+                        Bukkit.getLogger().info("[MenuListener] Shift-clicking from player inventory: " + 
+                                              currentItem.getType());
+                    }
+
+                    // Check if it's a valid jewel
+                    if (!JewelsCrushingMenu.isJewel(currentItem)) {
+                        player.sendMessage(ChatColor.RED + "You can only place jewels in the crushing menu!");
+                        event.setCancelled(true);
+                        return;
+                    }
+
+                    // Find empty slot in crushing area (0-17)
+                    boolean placed = false;
+                    for (int i = 0; i < 18; i++) {
+                        if (inv.getItem(i) == null || inv.getItem(i).getType() == Material.AIR) {
+                            ItemStack toPlace = currentItem.clone();
+                            inv.setItem(i, toPlace);
+                            currentItem.setAmount(0); // Remove from player inventory
+                            placed = true;
+
+                            if (debuggingFlag == 1) {
+                                Bukkit.getLogger().info("[MenuListener] Placed jewel in slot: " + i);
+                            }
+                            break;
+                        }
+                    }
+
+                    if (!placed) {
+                        player.sendMessage(ChatColor.RED + "No space available in the crushing area!");
+                    }
+
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+
             // Allow the action (placing/removing)
             event.setCancelled(false);
             return;
@@ -1027,18 +1275,28 @@ public class MenuListener implements Listener {
 
         // If clicking in player inventory, allow it
         if (event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Click in player inventory allowed");
+            }
             event.setCancelled(false);
             return;
         }
 
         // Handle confirm button
         if (slot == 22 && itemName != null && itemName.equals("Confirm Crushing")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Confirm crushing button clicked");
+            }
+
             JewelsCrushingMenu.processJewels(player, inv);
             event.setCancelled(true);
             return;
         }
 
-        // Cancel click on bottom row glass panes
+        // Cancel click on bottom row glass panes and other UI elements
+        if (debuggingFlag == 1) {
+            Bukkit.getLogger().info("[MenuListener] Cancelling click on UI element, slot: " + slot);
+        }
         event.setCancelled(true);
     }
 
@@ -1896,7 +2154,7 @@ public class MenuListener implements Listener {
         if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
             Bukkit.getLogger().info("[MenuListener] Starting Emilia exchange for player: " + player.getName() + 
                                   ", itemId: " + itemId);
-            ImprovedTransactionManager.testDailyLimit(player, itemId, "emilia");
+            TransactionManager.testDailyLimit(player, itemId, "emilia");
         }
 
         // Process the purchase
@@ -1964,7 +2222,7 @@ public class MenuListener implements Listener {
         if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
             Bukkit.getLogger().info("[MenuListener] Starting Zumpe exchange for player: " + player.getName() + 
                                   ", itemId: " + itemId);
-            ImprovedTransactionManager.testDailyLimit(player, itemId, "zumpe");
+            TransactionManager.testDailyLimit(player, itemId, "zumpe");
         }
 
         // Process the purchase

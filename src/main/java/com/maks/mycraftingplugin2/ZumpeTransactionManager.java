@@ -1,5 +1,6 @@
 package com.maks.mycraftingplugin2;
 
+import com.maks.mycraftingplugin2.integration.PouchIntegrationHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -22,8 +23,8 @@ public class ZumpeTransactionManager {
      * @return The number of transactions today
      */
     public static int getTransactionCount(UUID playerUUID, int itemId) {
-        // Use ImprovedTransactionManager for better timezone handling
-        return ImprovedTransactionManager.getTransactionCount(playerUUID, itemId, "zumpe");
+        // Use TransactionManager for better timezone handling
+        return TransactionManager.getTransactionCount(playerUUID, itemId, "zumpe");
     }
 
     /**
@@ -33,8 +34,8 @@ public class ZumpeTransactionManager {
      * @return True if the transaction was recorded successfully
      */
     public static boolean recordTransaction(UUID playerUUID, int itemId) {
-        // Use ImprovedTransactionManager for better timezone handling
-        return ImprovedTransactionManager.recordTransaction(playerUUID, itemId, "zumpe");
+        // Use TransactionManager for better timezone handling
+        return TransactionManager.recordTransaction(playerUUID, itemId, "zumpe");
     }
 
     /**
@@ -73,7 +74,7 @@ public class ZumpeTransactionManager {
                     }
                 }
 
-                // Check required items using new comparison helper
+                // Check required items using PouchIntegrationHelper (MODIFIED)
                 Map<Integer, ItemStack> requiredItems = new HashMap<>();
                 for (int i = 0; i < 10; i++) {
                     String requiredItemData = rs.getString("required_item_" + (i + 1));
@@ -81,15 +82,20 @@ public class ZumpeTransactionManager {
                         ItemStack requiredItem = ItemStackSerializer.deserialize(requiredItemData);
                         requiredItems.put(i, requiredItem);
 
-                        // Use new comparison helper
-                        if (ItemComparisonHelper.getTotalSimilarItemAmount(player, requiredItem) < requiredItem.getAmount()) {
+                        // Use PouchIntegrationHelper instead of ItemComparisonHelper
+                        int totalAmount = PouchIntegrationHelper.getTotalItemAmount(player, requiredItem);
+                        int neededAmount = requiredItem.getAmount();
+
+                        if (totalAmount < neededAmount) {
                             if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
                                 Bukkit.getLogger().info("[ZumpeTransaction] Player missing: " + 
-                                                      requiredItem.getType() + " x" + requiredItem.getAmount());
+                                                      requiredItem.getType() + " x" + neededAmount + 
+                                                      " (has: " + totalAmount + ")");
                             }
                             player.sendMessage(ChatColor.RED + "You don't have all the required items for this exchange!");
-                            player.sendMessage(ChatColor.YELLOW + "Missing: " + requiredItem.getType() + 
-                                             " x" + requiredItem.getAmount());
+                            player.sendMessage(ChatColor.YELLOW + "Missing: " + 
+                                             requiredItem.getItemMeta().getDisplayName() + 
+                                             " x" + (neededAmount - totalAmount));
                             return false;
                         }
                     }
@@ -115,12 +121,24 @@ public class ZumpeTransactionManager {
                     return false;
                 }
 
-                // Remove required items from player using new helper
+                // Remove required items from player using PouchIntegrationHelper (MODIFIED)
                 for (ItemStack requiredItem : requiredItems.values()) {
-                    ItemComparisonHelper.removeSimilarItems(player, requiredItem);
+                    PouchIntegrationHelper.RemovalResult result = PouchIntegrationHelper.removeItems(player, requiredItem);
+                    if (!result.success) {
+                        if (result.errorMessage != null && result.errorMessage.startsWith("Not enough")) {
+                            player.sendMessage(ChatColor.RED + "You don't have enough " + 
+                                PouchIntegrationHelper.getItemName(requiredItem) + 
+                                "! Required: " + result.required + ", Available: " + result.available);
+                        } else {
+                            player.sendMessage(ChatColor.RED + "Error removing items! Contact administrator.");
+                        }
+                        return false;
+                    }
+
                     if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
                         Bukkit.getLogger().info("[ZumpeTransaction] Removed: " + 
-                                              requiredItem.getType() + " x" + requiredItem.getAmount());
+                                              PouchIntegrationHelper.getItemName(requiredItem) + " x" + 
+                                              PouchIntegrationHelper.getActualItemAmount(requiredItem));
                     }
                 }
 
@@ -175,8 +193,8 @@ public class ZumpeTransactionManager {
      * Can be run daily at server startup or via scheduler.
      */
     public static void cleanupOldTransactions() {
-        // Use ImprovedTransactionManager for better timezone handling
-        ImprovedTransactionManager.cleanupOldTransactions("zumpe");
+        // Use TransactionManager for better timezone handling
+        TransactionManager.cleanupOldTransactions("zumpe");
     }
 
     // getCurrentDate method removed - now using ImprovedTransactionManager

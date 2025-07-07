@@ -1,6 +1,6 @@
 # MyCraftingPlugin2
 
-A comprehensive Minecraft plugin for custom crafting and alchemy systems. This plugin allows server administrators to create custom recipes with success chances, costs, and different difficulty levels.
+A comprehensive Minecraft plugin for custom crafting, alchemy, jeweler systems, and shops. This plugin allows server administrators to create custom recipes with success chances, costs, and different difficulty levels.
 
 ## Features
 
@@ -19,6 +19,18 @@ A comprehensive Minecraft plugin for custom crafting and alchemy systems. This p
   - Physic Crafting
 - Custom recipes for each category
 
+### Jeweler System
+- Jewel crafting and management
+- Jewels crushing functionality
+- Custom recipes for jewel creation
+- In-game editor for jeweler recipes
+
+### Shop Systems
+- Emilia's Shop with premium and deluxe tiers
+- Zumpe Shop for special items
+- Transaction management for purchases
+- Event shop functionality
+
 ### Upgrade System
 - 10 quality levels (q1-q10)
 - Three difficulty tiers per level:
@@ -26,6 +38,11 @@ A comprehensive Minecraft plugin for custom crafting and alchemy systems. This p
   - Hell
   - Blood
 - Custom recipes for each difficulty tier
+
+### Integration
+- Vault integration for economy
+- IngredientPouchPlugin integration for item storage
+- Custom pouch item mappings
 
 ### Admin Features
 - In-game recipe editor
@@ -38,7 +55,8 @@ A comprehensive Minecraft plugin for custom crafting and alchemy systems. This p
 - Spigot/Paper 1.20.1
 - Java 8 or higher
 - MySQL Database
-- Vault
+- Vault (required for economy integration)
+- IngredientPouchPlugin (optional, for pouch integration)
 
 ## Installation
 
@@ -68,13 +86,27 @@ database:
 | `/editcrafting` | mycraftingplugin.editlayout | Opens the crafting menu in edit mode |
 | `/alchemy` | mycraftingplugin.use | Opens the alchemy menu |
 | `/edit_alchemy` | mycraftingplugin.editlayout | Opens the alchemy menu in edit mode |
+| `/jeweler` or `/jew` | mycraftingplugin.use | Opens the jeweler menu |
+| `/edit_jeweler` | mycraftingplugin.editlayout | Opens the jeweler menu in edit mode |
+| `/jewels_crushing` or `/crushingj` or `/jcrushing` | mycraftingplugin.use | Opens the jewels crushing menu |
+| `/emilia` | mycraftingplugin.use | Opens Emilia's shop menu |
+| `/edit_emilia` | mycraftingplugin.editlayout | Opens Emilia's shop menu in edit mode |
+| `/zumpe` | mycraftingplugin.use | Opens Zumpe shop menu |
+| `/edit_zumpe` | mycraftingplugin.editlayout | Opens Zumpe shop menu in edit mode |
 | `/addrecipe` | mycraftingplugin.add | Adds a new recipe to a category |
+| `/testjewels` | mycraftingplugin.testjewels | Tests jewel detection system |
+| `/testpouch` | mycraftingplugin.testpouch | Tests pouch integration |
 
 ## Permissions
 
-- `mycraftingplugin.use` - Allows using the crafting and alchemy systems
+- `mycraftingplugin.use` - Allows using the crafting, alchemy, jeweler, and shop systems
 - `mycraftingplugin.editlayout` - Allows editing layouts and categories
 - `mycraftingplugin.add` - Allows adding new recipes
+- `mycraftingplugin.edit` - Allows editing existing recipes
+- `mycraftingplugin.premium` - Allows access to premium tier items in Emilia's shop
+- `mycraftingplugin.deluxe` - Allows access to deluxe tier items in Emilia's shop
+- `mycraftingplugin.testjewels` - Allows testing of jewel detection system
+- `mycraftingplugin.testpouch` - Allows testing of pouch integration
 
 ## Recipe Creation Guide
 
@@ -100,6 +132,29 @@ database:
 - Drag and drop recipes in edit mode to arrange them
 - Changes are automatically saved
 - Use pagination buttons to navigate through recipes
+
+## Pouch Integration
+
+The plugin integrates with IngredientPouchPlugin to allow players to use items directly from their ingredient pouches.
+
+### Features
+
+- Automatically detects and uses items from pouches when crafting
+- Maps custom items to their pouch equivalents
+- Supports all crafting and shop systems
+- Provides testing commands for verifying pouch functionality
+
+### Usage
+
+1. Install IngredientPouchPlugin alongside this plugin
+2. Configure item mappings as needed
+3. Players with pouches can craft without removing ingredients from their pouches
+
+### Testing
+
+Use the `/testpouch` command with the following options:
+- `/testpouch check` - Checks if a player has specific items in their pouches
+- `/testpouch inventory` - Shows all items in a player's pouches
 
 ## Technical Details
 
