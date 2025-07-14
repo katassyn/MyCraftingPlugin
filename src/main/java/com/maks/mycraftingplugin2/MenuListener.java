@@ -14,6 +14,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import com.maks.mycraftingplugin2.events.CustomCraftingEvent;
 
 import java.sql.*;
 import java.util.*;
@@ -768,9 +769,14 @@ public class MenuListener implements Listener {
                         player.getInventory().addItem(craftedItem);
                         player.sendMessage(ChatColor.GREEN + "Crafting successful!");
 
+                        // Call custom crafting event for integration with other plugins
+                        CustomCraftingEvent event = new CustomCraftingEvent(player, craftedItem);
+                        Bukkit.getPluginManager().callEvent(event);
+
                         if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
                             Bukkit.getLogger().info("[Crafting] Success - crafted: " + 
                                 PouchIntegrationHelper.getItemName(craftedItem));
+                            Bukkit.getLogger().info("[Crafting] CustomCraftingEvent fired for player: " + player.getName());
                         }
                     } else {
                         player.sendMessage(ChatColor.RED + "Crafting failed.");
