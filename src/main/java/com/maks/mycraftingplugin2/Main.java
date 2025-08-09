@@ -42,6 +42,9 @@ public class Main extends JavaPlugin {
         getCommand("jeweler").setExecutor(new JewelerCommand());
         getCommand("edit_jeweler").setExecutor(new EditJewelerCommand());
         getCommand("jewels_crushing").setExecutor(new JewelsCrushingCommand());
+        getCommand("gemologist").setExecutor(new GemologistCommand());
+        getCommand("edit_gemologist").setExecutor(new EditGemologistCommand());
+        getCommand("gem_crushing").setExecutor(new GemCrushingCommand());
         getCommand("emilia").setExecutor(new EmiliaCommand());
         getCommand("edit_emilia").setExecutor(new EditEmiliaCommand());
         getCommand("zumpe").setExecutor(new ZumpeCommand());

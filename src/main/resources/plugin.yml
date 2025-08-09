@@ -34,6 +34,18 @@ commands:
     usage: /jewels_crushing
     permission: mycraftingplugin.use
     aliases: [crushingj, jcrushing]
+  gemologist:
+    description: "Opens the gemologist menu"
+    usage: /gemologist
+    permission: mycraftingplugin.use
+  edit_gemologist:
+    description: "Opens the gemologist menu in edit mode"
+    usage: /edit_gemologist
+    permission: mycraftingplugin.editlayout
+  gem_crushing:
+    description: "Opens the gem crushing menu"
+    usage: /gem_crushing
+    permission: mycraftingplugin.use
   emilia:
     description: "Opens Emilia's shop menu"
     usage: /emilia
