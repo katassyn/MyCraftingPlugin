@@ -14,6 +14,14 @@ commands:
     usage: /editcrafting
     permission: mycraftingplugin.editlayout
     permission-message: You don't have permission to use this command.
+  mine_shop:
+    description: "Opens the mine shop crafting menu"
+    usage: /mine_shop
+    permission: mycraftingplugin.use
+  edit_mine_shop:
+    description: "Opens the mine shop crafting menu in edit mode"
+    usage: /edit_mine_shop
+    permission: mycraftingplugin.editlayout
   alchemy:
     description: "Open Alchemy menu"
     permission: mycraftingplugin.use
@@ -34,6 +42,18 @@ commands:
     usage: /jewels_crushing
     permission: mycraftingplugin.use
     aliases: [crushingj, jcrushing]
+  gemologist:
+    description: "Opens the gemologist menu"
+    usage: /gemologist
+    permission: mycraftingplugin.use
+  edit_gemologist:
+    description: "Opens the gemologist menu in edit mode"
+    usage: /edit_gemologist
+    permission: mycraftingplugin.editlayout
+  gem_crushing:
+    description: "Opens the gem crushing menu"
+    usage: /gem_crushing
+    permission: mycraftingplugin.use
   emilia:
     description: "Opens Emilia's shop menu"
     usage: /emilia
