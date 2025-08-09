@@ -37,6 +37,8 @@ public class Main extends JavaPlugin {
         // Rejestracja komend
         getCommand("crafting").setExecutor(new CraftingCommand());
         getCommand("editcrafting").setExecutor(new EditCraftingCommand());
+        getCommand("mine_shop").setExecutor(new MineShopCommand());
+        getCommand("edit_mine_shop").setExecutor(new EditMineShopCommand());
         getCommand("alchemy").setExecutor(new AlchemyCommand());
         getCommand("edit_alchemy").setExecutor(new EditAlchemyCommand());
         getCommand("jeweler").setExecutor(new JewelerCommand());
