@@ -26,6 +26,7 @@ public class EditMineShopCommand implements CommandExecutor {
         }
 
         CategoryMenu.openEditor(player, "mine_shop", 0);
+
         return true;
     }
 }

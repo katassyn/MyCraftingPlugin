@@ -445,6 +445,7 @@ public class MenuListener implements Listener {
                 else if (category.equalsIgnoreCase("mine_shop")) {
                     player.closeInventory();
                 }
+
                 // Inne kategorie (keys, lootboxes, itd.)
                 else {
                     if (isEditMode) {
