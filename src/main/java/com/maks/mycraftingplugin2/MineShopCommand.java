@@ -19,7 +19,8 @@ public class MineShopCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
-        MainMenu.open(player);
+        CategoryMenu.open(player, "mine_shop", 0);
+
         return true;
     }
 }

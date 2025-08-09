@@ -441,6 +441,11 @@ public class MenuListener implements Listener {
                         GemologistMainMenu.open(player);
                     }
                 }
+                // Jeżeli to kategoria Mine Shop
+                else if (category.equalsIgnoreCase("mine_shop")) {
+                    player.closeInventory();
+                }
+
                 // Inne kategorie (keys, lootboxes, itd.)
                 else {
                     if (isEditMode) {
