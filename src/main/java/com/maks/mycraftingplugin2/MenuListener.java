@@ -45,6 +45,14 @@ public class MenuListener implements Listener {
             // Return all items from crushing slots to player
             JewelsCrushingMenu.returnItemsToPlayer(player, event.getInventory());
         }
+        // Handle Gem Crushing menu closure
+        else if (title.equals("Gem Crushing")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Handling Gem Crushing menu close for: " + player.getName());
+            }
+
+            GemCrushingMenu.returnItemsToPlayer(player, event.getInventory());
+        }
 
         // Handle other menus that might need item protection
         else if (title.equals("Add New Recipe") || title.equals("Edit Recipe")) {
@@ -136,6 +144,12 @@ public class MenuListener implements Listener {
             handleEditJewelerMenuClick(player, itemName);
         } else if (title.equals("Jewels Crushing")) {
             handleJewelsCrushingMenuClick(event, player, clickedItem, itemName);
+        } else if (title.equals("Gemologist Menu")) {
+            handleGemologistMenuClick(player, itemName);
+        } else if (title.equals("Edit Gemologist Menu")) {
+            handleEditGemologistMenuClick(player, itemName);
+        } else if (title.equals("Gem Crushing")) {
+            handleGemCrushingMenuClick(event, player, clickedItem, itemName);
         } else if (title.equals("Emilia Shop")) {
             handleEmiliaMainMenu(player, clickedItem, itemName);
         } else if (title.equals("Edit Emilia Shop")) {
@@ -186,6 +200,9 @@ public class MenuListener implements Listener {
                 || title.equals("Jeweler Menu")
                 || title.equals("Edit Jeweler Menu")
                 || title.equals("Jewels Crushing")
+                || title.equals("Gemologist Menu")
+                || title.equals("Edit Gemologist Menu")
+                || title.equals("Gem Crushing")
                 || title.equals("Emilia Shop")
                 || title.equals("Edit Emilia Shop")
                 || title.equals("Emilia - Shop")
@@ -415,6 +432,18 @@ public class MenuListener implements Listener {
                     } else {
                         JewelerMainMenu.open(player);
                     }
+                }
+                // Jeżeli to kategoria Gemologa
+                else if (category.equalsIgnoreCase("gems_crafting")) {
+                    if (isEditMode) {
+                        GemologistMainMenu.openEditor(player);
+                    } else {
+                        GemologistMainMenu.open(player);
+                    }
+                }
+                // Jeżeli to kategoria Mine Shop
+                else if (category.equalsIgnoreCase("mine_shop")) {
+                    player.closeInventory();
                 }
                 // Inne kategorie (keys, lootboxes, itd.)
                 else {
@@ -1185,6 +1214,48 @@ public class MenuListener implements Listener {
         }
     }
 
+    private void handleGemologistMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Gem Crafting":
+                CategoryMenu.open(player, "gems_crafting", 0);
+                break;
+            case "Gem Actions":
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gem_actions " + player.getName());
+                break;
+            case "Gem Crushing":
+                GemCrushingCommand.openMenuWithoutPermissionCheck(player);
+                break;
+            case "Back":
+                MainMenu.open(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEditGemologistMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Gem Crafting":
+                CategoryMenu.openEditor(player, "gems_crafting", 0);
+                break;
+            case "Gem Actions":
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gem_actions " + player.getName());
+                break;
+            case "Gem Crushing":
+                GemCrushingCommand.openMenuWithoutPermissionCheck(player);
+                break;
+            case "Back":
+                MainMenu.openEditor(player);
+                break;
+            default:
+                break;
+        }
+    }
+
     private void handleJewelsCrushingMenuClick(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
         int slot = event.getRawSlot();
         Inventory inv = event.getInventory();
@@ -1303,6 +1374,72 @@ public class MenuListener implements Listener {
         if (debuggingFlag == 1) {
             Bukkit.getLogger().info("[MenuListener] Cancelling click on UI element, slot: " + slot);
         }
+        event.setCancelled(true);
+    }
+
+    private void handleGemCrushingMenuClick(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        int slot = event.getRawSlot();
+        Inventory inv = event.getInventory();
+
+        if (event.getClickedInventory() == null) {
+            return;
+        }
+
+        if (slot < 18 && event.getClickedInventory().equals(event.getView().getTopInventory())) {
+            if (event.getAction().name().contains("PLACE")) {
+                ItemStack cursor = event.getCursor();
+                if (cursor != null && cursor.getType() != Material.AIR) {
+                    if (!GemCrushingMenu.isGem(cursor)) {
+                        player.sendMessage(ChatColor.RED + "You can only place gems here!");
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            } else if (event.getAction().name().contains("SHIFT") &&
+                    event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+                ItemStack currentItem = event.getCurrentItem();
+                if (currentItem != null && currentItem.getType() != Material.AIR) {
+                    if (!GemCrushingMenu.isGem(currentItem)) {
+                        player.sendMessage(ChatColor.RED + "You can only place gems in the crushing menu!");
+                        event.setCancelled(true);
+                        return;
+                    }
+
+                    boolean placed = false;
+                    for (int i = 0; i < 18; i++) {
+                        if (inv.getItem(i) == null || inv.getItem(i).getType() == Material.AIR) {
+                            ItemStack toPlace = currentItem.clone();
+                            inv.setItem(i, toPlace);
+                            currentItem.setAmount(0);
+                            placed = true;
+                            break;
+                        }
+                    }
+
+                    if (!placed) {
+                        player.sendMessage(ChatColor.RED + "No space available in the crushing area!");
+                    }
+
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+
+            event.setCancelled(false);
+            return;
+        }
+
+        if (event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+            event.setCancelled(false);
+            return;
+        }
+
+        if (slot == 22 && itemName != null && itemName.equals("Confirm Crushing")) {
+            GemCrushingMenu.processGems(player, inv);
+            event.setCancelled(true);
+            return;
+        }
+
         event.setCancelled(true);
     }
 
