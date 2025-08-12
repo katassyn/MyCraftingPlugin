@@ -60,8 +60,14 @@ public class MenuListener implements Listener {
                 Bukkit.getLogger().info("[MenuListener] Handling Recipe menu close for: " + player.getName());
             }
 
-            // Save GUI state for recipe menus
-            AddRecipeMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+            String state = ChatListener.getPlayerState(player.getUniqueId());
+            if ("entering_success_chance".equals(state) || "entering_cost".equals(state)) {
+                // Save GUI state only when expecting chat input
+                AddRecipeMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+            } else {
+                // Otherwise clear saved state to avoid carrying over items
+                AddRecipeMenu.removeGuiState(player.getUniqueId());
+            }
         }
 
         else if (title.equals("Add Emilia Item") || title.equals("Edit Emilia Item")) {
@@ -69,8 +75,12 @@ public class MenuListener implements Listener {
                 Bukkit.getLogger().info("[MenuListener] Handling Emilia item menu close for: " + player.getName());
             }
 
-            // Save GUI state for Emilia menus
-            EmiliaAddItemMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+            String state = ChatListener.getPlayerState(player.getUniqueId());
+            if ("entering_cost".equals(state) || "entering_emilia_daily_limit".equals(state)) {
+                EmiliaAddItemMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+            } else {
+                EmiliaAddItemMenu.removeGuiState(player.getUniqueId());
+            }
         }
 
         else if (title.equals("Add Zumpe Item") || title.equals("Edit Zumpe Item")) {
@@ -78,8 +88,12 @@ public class MenuListener implements Listener {
                 Bukkit.getLogger().info("[MenuListener] Handling Zumpe item menu close for: " + player.getName());
             }
 
-            // Save GUI state for Zumpe menus
-            ZumpeAddItemMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+            String state = ChatListener.getPlayerState(player.getUniqueId());
+            if ("entering_cost".equals(state) || "entering_zumpe_daily_limit".equals(state)) {
+                ZumpeAddItemMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+            } else {
+                ZumpeAddItemMenu.removeGuiState(player.getUniqueId());
+            }
         }
     }
 

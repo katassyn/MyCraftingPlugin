@@ -31,6 +31,13 @@ public class ChatListener implements Listener {
         playerStates.remove(uuid);
     }
 
+    /**
+     * Zwraca aktualny stan gracza lub null jeśli żaden nie jest ustawiony.
+     */
+    public static String getPlayerState(UUID uuid) {
+        return playerStates.get(uuid);
+    }
+
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
