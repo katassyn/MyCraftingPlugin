@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import com.maks.mycraftingplugin2.events.CustomCraftEvent;
+import org.bukkit.permissions.PermissionAttachment;
 
 import java.sql.*;
 import java.util.*;
@@ -1237,7 +1238,14 @@ public class MenuListener implements Listener {
                 CategoryMenu.open(player, "gems_crafting", 0);
                 break;
             case "Gem Actions":
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gem_actions " + player.getName());
+                PermissionAttachment attachment = null;
+                if (!player.hasPermission("mycraftingplugin.use")) {
+                    attachment = player.addAttachment(Main.getInstance(), "mycraftingplugin.use", true);
+                }
+                player.performCommand("gem_actions");
+                if (attachment != null) {
+                    player.removeAttachment(attachment);
+                }
                 break;
             case "Gem Crushing":
                 GemCrushingCommand.openMenuWithoutPermissionCheck(player);
@@ -1258,7 +1266,14 @@ public class MenuListener implements Listener {
                 CategoryMenu.openEditor(player, "gems_crafting", 0);
                 break;
             case "Gem Actions":
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gem_actions " + player.getName());
+                PermissionAttachment attachment = null;
+                if (!player.hasPermission("mycraftingplugin.use")) {
+                    attachment = player.addAttachment(Main.getInstance(), "mycraftingplugin.use", true);
+                }
+                player.performCommand("gem_actions");
+                if (attachment != null) {
+                    player.removeAttachment(attachment);
+                }
                 break;
             case "Gem Crushing":
                 GemCrushingCommand.openMenuWithoutPermissionCheck(player);
