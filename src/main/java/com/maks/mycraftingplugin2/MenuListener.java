@@ -457,7 +457,7 @@ public class MenuListener implements Listener {
                     }
                 }
                 // Jeżeli to kategoria Mine Shop
-                else if (category.equalsIgnoreCase("mine_shop")) {
+                else if (category.equalsIgnoreCase("mine_shop") || category.equalsIgnoreCase("fisherman_shop")) {
                     player.closeInventory();
                 }
 

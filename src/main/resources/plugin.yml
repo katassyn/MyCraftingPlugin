@@ -22,6 +22,14 @@ commands:
     description: "Opens the mine shop crafting menu in edit mode"
     usage: /edit_mine_shop
     permission: mycraftingplugin.editlayout
+  fisherman_shop:
+    description: "Opens the fisherman shop crafting menu"
+    usage: /fisherman_shop
+    permission: mycraftingplugin.use
+  edit_fisherman_shop:
+    description: "Opens the fisherman shop crafting menu in edit mode"
+    usage: /edit_fisherman_shop
+    permission: mycraftingplugin.editlayout
   alchemy:
     description: "Open Alchemy menu"
     permission: mycraftingplugin.use
