@@ -473,8 +473,29 @@ public class MenuListener implements Listener {
                         GemologistMainMenu.open(player);
                     }
                 }
+                // Jeżeli to kategoria Runemastera
+                else if (category.equalsIgnoreCase("runes_upgrading")) {
+                    if (isEditMode) {
+                        RunemasterMainMenu.openEditor(player);
+                    } else {
+                        RunemasterMainMenu.open(player);
+                    }
+                }
                 // Jeżeli to kategoria Mine Shop
-                else if (category.equalsIgnoreCase("mine_shop") || category.equalsIgnoreCase("fisherman_shop")) {
+                else if (category.equalsIgnoreCase("mine_shop")) {
+                    player.closeInventory();
+                    boolean hadPerm = player.hasPermission("minesystemplugin.mine");
+                    if (hadPerm) {
+                        player.performCommand("mine");
+                    } else {
+                        PermissionAttachment attachment = player.addAttachment(Main.getInstance());
+                        attachment.setPermission("minesystemplugin.mine", true);
+                        player.performCommand("mine");
+                        player.removeAttachment(attachment);
+                    }
+                }
+                // Jeżeli to kategoria Fisherman Shop
+                else if (category.equalsIgnoreCase("fisherman_shop")) {
                     player.closeInventory();
                 }
 
