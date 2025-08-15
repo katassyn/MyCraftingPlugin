@@ -497,6 +497,15 @@ public class MenuListener implements Listener {
                 // Jeżeli to kategoria Fisherman Shop
                 else if (category.equalsIgnoreCase("fisherman_shop")) {
                     player.closeInventory();
+                    boolean hadPerm = player.hasPermission("fishing.use");
+                    if (hadPerm) {
+                        player.performCommand("fishing");
+                    } else {
+                        PermissionAttachment attachment = player.addAttachment(Main.getInstance());
+                        attachment.setPermission("fishing.use", true);
+                        player.performCommand("fishing");
+                        player.removeAttachment(attachment);
+                    }
                 }
 
                 // Inne kategorie (keys, lootboxes, itd.)
