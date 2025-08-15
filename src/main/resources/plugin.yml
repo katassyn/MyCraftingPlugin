@@ -62,6 +62,18 @@ commands:
     description: "Opens the gem crushing menu"
     usage: /gem_crushing
     permission: mycraftingplugin.use
+  runemaster:
+    description: "Opens the runemaster menu"
+    usage: /runemaster
+    permission: mycraftingplugin.use
+  edit_runemaster:
+    description: "Opens the runemaster menu in edit mode"
+    usage: /edit_runemaster
+    permission: mycraftingplugin.editlayout
+  runes_crushing:
+    description: "Opens the rune crushing menu"
+    usage: /runes_crushing
+    permission: mycraftingplugin.use
   emilia:
     description: "Opens Emilia's shop menu"
     usage: /emilia
