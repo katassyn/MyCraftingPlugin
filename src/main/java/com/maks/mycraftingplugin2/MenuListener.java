@@ -54,6 +54,14 @@ public class MenuListener implements Listener {
 
             GemCrushingMenu.returnItemsToPlayer(player, event.getInventory());
         }
+        // Handle Rune Crushing menu closure
+        else if (title.equals("Rune Crushing")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Handling Rune Crushing menu close for: " + player.getName());
+            }
+
+            RunesCrushingMenu.returnItemsToPlayer(player, event.getInventory());
+        }
 
         // Handle other menus that might need item protection
         else if (title.equals("Add New Recipe") || title.equals("Edit Recipe")) {
@@ -165,6 +173,12 @@ public class MenuListener implements Listener {
             handleEditGemologistMenuClick(player, itemName);
         } else if (title.equals("Gem Crushing")) {
             handleGemCrushingMenuClick(event, player, clickedItem, itemName);
+        } else if (title.equals("Runemaster Menu")) {
+            handleRunemasterMenuClick(player, itemName);
+        } else if (title.equals("Edit Runemaster Menu")) {
+            handleEditRunemasterMenuClick(player, itemName);
+        } else if (title.equals("Rune Crushing")) {
+            handleRuneCrushingMenuClick(event, player, clickedItem, itemName);
         } else if (title.equals("Emilia Shop")) {
             handleEmiliaMainMenu(player, clickedItem, itemName);
         } else if (title.equals("Edit Emilia Shop")) {
@@ -218,6 +232,9 @@ public class MenuListener implements Listener {
                 || title.equals("Gemologist Menu")
                 || title.equals("Edit Gemologist Menu")
                 || title.equals("Gem Crushing")
+                || title.equals("Runemaster Menu")
+                || title.equals("Edit Runemaster Menu")
+                || title.equals("Rune Crushing")
                 || title.equals("Emilia Shop")
                 || title.equals("Edit Emilia Shop")
                 || title.equals("Emilia - Shop")
@@ -456,8 +473,29 @@ public class MenuListener implements Listener {
                         GemologistMainMenu.open(player);
                     }
                 }
+                // Jeżeli to kategoria Runemastera
+                else if (category.equalsIgnoreCase("runes_upgrading")) {
+                    if (isEditMode) {
+                        RunemasterMainMenu.openEditor(player);
+                    } else {
+                        RunemasterMainMenu.open(player);
+                    }
+                }
                 // Jeżeli to kategoria Mine Shop
-                else if (category.equalsIgnoreCase("mine_shop") || category.equalsIgnoreCase("fisherman_shop")) {
+                else if (category.equalsIgnoreCase("mine_shop")) {
+                    player.closeInventory();
+                    boolean hadPerm = player.hasPermission("minesystemplugin.mine");
+                    if (hadPerm) {
+                        player.performCommand("mine");
+                    } else {
+                        PermissionAttachment attachment = player.addAttachment(Main.getInstance());
+                        attachment.setPermission("minesystemplugin.mine", true);
+                        player.performCommand("mine");
+                        player.removeAttachment(attachment);
+                    }
+                }
+                // Jeżeli to kategoria Fisherman Shop
+                else if (category.equalsIgnoreCase("fisherman_shop")) {
                     player.closeInventory();
                 }
 
@@ -1286,6 +1324,42 @@ public class MenuListener implements Listener {
         }
     }
 
+    private void handleRunemasterMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Runes Upgrading":
+                CategoryMenu.open(player, "runes_upgrading", 0);
+                break;
+            case "Rune Crushing":
+                RunesCrushingCommand.openMenuWithoutPermissionCheck(player);
+                break;
+            case "Back":
+                MainMenu.open(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEditRunemasterMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Runes Upgrading":
+                CategoryMenu.openEditor(player, "runes_upgrading", 0);
+                break;
+            case "Rune Crushing":
+                RunesCrushingCommand.openMenuWithoutPermissionCheck(player);
+                break;
+            case "Back":
+                MainMenu.openEditor(player);
+                break;
+            default:
+                break;
+        }
+    }
+
     private void handleJewelsCrushingMenuClick(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
         int slot = event.getRawSlot();
         Inventory inv = event.getInventory();
@@ -1466,6 +1540,72 @@ public class MenuListener implements Listener {
 
         if (slot == 22 && itemName != null && itemName.equals("Confirm Crushing")) {
             GemCrushingMenu.processGems(player, inv);
+            event.setCancelled(true);
+            return;
+        }
+
+        event.setCancelled(true);
+    }
+
+    private void handleRuneCrushingMenuClick(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        int slot = event.getRawSlot();
+        Inventory inv = event.getInventory();
+
+        if (event.getClickedInventory() == null) {
+            return;
+        }
+
+        if (slot < 18 && event.getClickedInventory().equals(event.getView().getTopInventory())) {
+            if (event.getAction().name().contains("PLACE")) {
+                ItemStack cursor = event.getCursor();
+                if (cursor != null && cursor.getType() != Material.AIR) {
+                    if (!RunesCrushingMenu.isRune(cursor)) {
+                        player.sendMessage(ChatColor.RED + "You can only place runes here!");
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            } else if (event.getAction().name().contains("SHIFT") &&
+                    event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+                ItemStack currentItem = event.getCurrentItem();
+                if (currentItem != null && currentItem.getType() != Material.AIR) {
+                    if (!RunesCrushingMenu.isRune(currentItem)) {
+                        player.sendMessage(ChatColor.RED + "You can only place runes in the crushing menu!");
+                        event.setCancelled(true);
+                        return;
+                    }
+
+                    boolean placed = false;
+                    for (int i = 0; i < 18; i++) {
+                        if (inv.getItem(i) == null || inv.getItem(i).getType() == Material.AIR) {
+                            ItemStack toPlace = currentItem.clone();
+                            inv.setItem(i, toPlace);
+                            currentItem.setAmount(0);
+                            placed = true;
+                            break;
+                        }
+                    }
+
+                    if (!placed) {
+                        player.sendMessage(ChatColor.RED + "No space available in the crushing area!");
+                    }
+
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+
+            event.setCancelled(false);
+            return;
+        }
+
+        if (event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+            event.setCancelled(false);
+            return;
+        }
+
+        if (slot == 22 && itemName != null && itemName.equals("Confirm Crushing")) {
+            RunesCrushingMenu.processRunes(player, inv);
             event.setCancelled(true);
             return;
         }
