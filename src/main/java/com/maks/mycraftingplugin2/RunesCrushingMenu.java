@@ -167,7 +167,9 @@ public class RunesCrushingMenu {
         if (meta != null) {
             meta.setDisplayName("§cRune Dust");
             List<String> lore = new ArrayList<>();
-            lore.add("§o§7Used to upgrade runes");
+            // Ensure color code comes before italics so formatting is preserved
+            lore.add("§7§oUsed to upgrade runes");
+
             meta.setLore(lore);
             meta.addEnchant(Enchantment.DURABILITY, 10, true);
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
