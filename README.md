@@ -86,6 +86,8 @@ database:
 | `/editcrafting` | mycraftingplugin.editlayout | Opens the crafting menu in edit mode |
 | `/mine_shop` | mycraftingplugin.use | Opens the mine shop menu |
 | `/edit_mine_shop` | mycraftingplugin.editlayout | Opens the mine shop menu in edit mode |
+| `/fisherman_shop` | mycraftingplugin.use | Opens the fisherman shop menu |
+| `/edit_fisherman_shop` | mycraftingplugin.editlayout | Opens the fisherman shop menu in edit mode |
 | `/alchemy` | mycraftingplugin.use | Opens the alchemy menu |
 | `/edit_alchemy` | mycraftingplugin.editlayout | Opens the alchemy menu in edit mode |
 | `/jeweler` or `/jew` | mycraftingplugin.use | Opens the jeweler menu |

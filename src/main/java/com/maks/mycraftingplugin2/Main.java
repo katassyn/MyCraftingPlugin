@@ -39,6 +39,8 @@ public class Main extends JavaPlugin {
         getCommand("editcrafting").setExecutor(new EditCraftingCommand());
         getCommand("mine_shop").setExecutor(new MineShopCommand());
         getCommand("edit_mine_shop").setExecutor(new EditMineShopCommand());
+        getCommand("fisherman_shop").setExecutor(new FishermanShopCommand());
+        getCommand("edit_fisherman_shop").setExecutor(new EditFishermanShopCommand());
         getCommand("alchemy").setExecutor(new AlchemyCommand());
         getCommand("edit_alchemy").setExecutor(new EditAlchemyCommand());
         getCommand("jeweler").setExecutor(new JewelerCommand());
