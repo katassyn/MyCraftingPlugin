@@ -1,0 +1,114 @@
+ingredient_jewel_I:
+  Id: prismarine_shard
+  Display: '&9[ I ] &8Ingredient Jewel'
+  Group: Jewel
+  Enchantments:
+    - DURABILITY:10
+  Lore:
+    - ''
+    - '&6Get +1 additional Ingredients'
+    - '&6when picked up'
+    - '&7A forager gem, blessed by the Hut,'
+    - '&7guides hands to the freshest finds.'
+    - '&8-------------------'
+    - '&aRequired Level: &6 50'
+  Options:
+    HideFlags: true
+    HideAttributes: true
+    Unbreakable: true
+
+ingredient_jewel_II:
+  Id: prismarine_shard
+  Display: '&5[ II ] &8Ingredient Jewel'
+  Group: Jewel
+  Enchantments:
+    - DURABILITY:10
+  Lore:
+    - ''
+    - '&6Get +2 additional Ingredients'
+    - '&6when picked up'
+    - '&7A forager gem, blessed by the Hut,'
+    - '&7guides hands to the freshest finds.'
+    - '&8-------------------'
+    - '&aRequired Level: &6 50'
+  Options:
+    HideFlags: true
+    HideAttributes: true
+    Unbreakable: true
+
+ingredient_jewel_III:
+  Id: prismarine_shard
+  Display: '&6[ III ] &8Ingredient Jewel'
+  Group: Jewel
+  Enchantments:
+    - DURABILITY:10
+  Lore:
+    - ''
+    - '&6Get +3 additional Ingredients'
+    - '&6when picked up'
+    - '&7A forager gem, blessed by the Hut,'
+    - '&7guides hands to the freshest finds.'
+    - '&8-------------------'
+    - '&aRequired Level: &6 50'
+  Options:
+    HideFlags: true
+    HideAttributes: true
+    Unbreakable: true
+
+# GOLDEN FISH JEWEL
+golden_fish_jewel_I:
+  Id: wheat
+  Display: '&9[ I ] &6Golden Fish Jewel'
+  Group: Jewel
+  Enchantments:
+    - DURABILITY:10
+  Lore:
+    - ''
+    - '&6Have a 30% chance'
+    - '&6to double the caught item at Fishing Pool'
+    - '&7A charm gilded by the tides,'
+    - '&7blessing lucky hauls from the deep.'
+    - '&8-------------------'
+    - '&aRequired Level: &6 50'
+  Options:
+    HideFlags: true
+    HideAttributes: true
+    Unbreakable: true
+
+golden_fish_jewel_II:
+  Id: wheat
+  Display: '&5[ II ] &6Golden Fish Jewel'
+  Group: Jewel
+  Enchantments:
+    - DURABILITY:10
+  Lore:
+    - ''
+    - '&6Have a 40% chance'
+    - '&6to double the caught item at Fishing Pool'
+    - '&7A charm gilded by the tides,'
+    - '&7blessing lucky hauls from the deep.'
+    - '&8-------------------'
+    - '&aRequired Level: &6 50'
+  Options:
+    HideFlags: true
+    HideAttributes: true
+    Unbreakable: true
+
+golden_fish_jewel_III:
+  Id: wheat
+  Display: '&6[ III ] &6Golden Fish Jewel'
+  Group: Jewel
+  Enchantments:
+    - DURABILITY:10
+  Lore:
+    - ''
+    - '&6Have a 50% chance'
+    - '&6to double the caught item at Fishing Pool'
+    - '&7A charm gilded by the tides,'
+    - '&7blessing lucky hauls from the deep.'
+    - '&8-------------------'
+    - '&aRequired Level: &6 50'
+  Options:
+    HideFlags: true
+    HideAttributes: true
+    Unbreakable: true
