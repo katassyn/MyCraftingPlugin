@@ -39,7 +39,9 @@ public class JewelsCrushingMenu {
         "Sunspire Amber",            // CLOVER jewel
         "Melonbane Prism",           // DRAKENMELON jewel
         "Deathcut Garnet",           // COLLECTOR jewel
-        "Shadowpick Onyx"            // LOCKPICK jewel
+        "Shadowpick Onyx",           // LOCKPICK jewel
+        "Ingredient Jewel",          // INGREDIENT jewel
+        "Golden Fish Jewel"          // GOLDEN FISH jewel
     );
 
     public static void open(Player player) {
