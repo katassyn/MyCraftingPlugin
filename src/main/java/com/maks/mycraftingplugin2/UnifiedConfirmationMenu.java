@@ -19,7 +19,9 @@ import java.util.*;
  */
 public class UnifiedConfirmationMenu {
 
-    private static final int debuggingFlag = 1; // Set to 0 to disable debug messages
+    private static boolean isDebugEnabled() {
+        return Main.getInstance().getConfig().getInt("debug", 0) == 1;
+    }
 
     public enum ShopType {
         CRAFTING("recipes", "recipe_id", "Crafting Scheme"),
@@ -41,7 +43,7 @@ public class UnifiedConfirmationMenu {
      * Opens unified confirmation menu for any shop type
      */
     public static void open(Player player, int itemId, ShopType shopType) {
-        if (debuggingFlag == 1) {
+        if (isDebugEnabled()) {
             Bukkit.getLogger().info("[UnifiedConfirmation] Opening " + shopType.menuTitle + " for itemId: " + itemId);
         }
 
@@ -99,7 +101,7 @@ public class UnifiedConfirmationMenu {
                             ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
                             inv.setItem(10 + i, requiredItem);
 
-                            if (debuggingFlag == 1) {
+                            if (isDebugEnabled()) {
                                 Bukkit.getLogger().info("[UnifiedConfirmation] Set required item " + (i+1) + " in slot " + (10+i));
                             }
                         }
@@ -145,7 +147,7 @@ public class UnifiedConfirmationMenu {
                         resultItem.setItemMeta(meta);
                     }
 
-                    if (debuggingFlag == 1) {
+                    if (isDebugEnabled()) {
                         Bukkit.getLogger().info("[UnifiedConfirmation] Set result item for " + shopType.name());
                     }
 
@@ -283,7 +285,7 @@ public class UnifiedConfirmationMenu {
      * Updates button state and daily limit display
      */
     public static void refresh(Player player, int itemId, ShopType shopType) {
-        if (debuggingFlag == 1) {
+        if (isDebugEnabled()) {
             Bukkit.getLogger().info("[UnifiedConfirmation] Refreshing menu for " + shopType.name() + ", itemId: " + itemId);
         }
 
@@ -345,8 +347,8 @@ public class UnifiedConfirmationMenu {
 
                 boolean canExchange = usedToday < dailyLimit;
 
-                if (debuggingFlag == 1) {
-                    Bukkit.getLogger().info("[UnifiedConfirmation] Daily limit check: " + 
+                if (isDebugEnabled()) {
+                    Bukkit.getLogger().info("[UnifiedConfirmation] Daily limit check: " +
                                           usedToday + "/" + dailyLimit + " = " + canExchange);
                 }
 
