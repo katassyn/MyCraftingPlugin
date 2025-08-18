@@ -68,7 +68,7 @@ public class TemporaryData {
         costs.remove(playerUUID);
     }
 
-    // Required recipe for Conjurej shop crafting
+    // Required recipe for Conjurer shop crafting
     private static Map<UUID, String> requiredRecipes = new HashMap<>();
 
     public static void setRequiredRecipe(UUID playerUUID, String recipe) {

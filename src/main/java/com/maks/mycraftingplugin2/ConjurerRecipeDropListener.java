@@ -13,11 +13,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Handles dropping of Conjurej recipes from MythicMobs.
+ * Handles dropping of Conjurer recipes from MythicMobs.
  * Uses metadata "MythicType" to identify MythicMobs without
  * requiring a direct dependency on the MythicMobs API.
  */
-public class ConjurejRecipeDropListener implements Listener {
+public class ConjurerRecipeDropListener implements Listener {
 
     private final Random random = new Random();
 
@@ -30,22 +30,22 @@ public class ConjurejRecipeDropListener implements Listener {
         if (!entity.hasMetadata("MythicType")) return;
         String mobId = entity.getMetadata("MythicType").get(0).asString();
 
-        String mobsRaw = Main.getInstance().getConfig().getString("conjurej.mobs", "");
+        String mobsRaw = Main.getInstance().getConfig().getString("conjurer.mobs", "");
         List<String> allowed = Arrays.stream(mobsRaw.split("\\R"))
                 .map(String::trim)
                 .filter(line -> !line.isEmpty() && !line.startsWith("#"))
                 .collect(Collectors.toList());
         if (!allowed.contains(mobId)) return;
 
-        double dropChance = Main.getInstance().getConfig().getDouble("conjurej.recipe_drop_chance", 0.001);
+        double dropChance = Main.getInstance().getConfig().getDouble("conjurer.recipe_drop_chance", 0.001);
         if (random.nextDouble() >= dropChance) return;
 
         UUID uuid = killer.getUniqueId();
-        List<String> locked = ConjurejRecipeUnlockManager.getLockedRecipes(uuid);
+        List<String> locked = ConjurerRecipeUnlockManager.getLockedRecipes(uuid);
         if (locked.isEmpty()) return;
 
         String recipe = locked.get(random.nextInt(locked.size()));
-        ConjurejRecipeUnlockManager.unlockRecipe(killer, recipe);
+        ConjurerRecipeUnlockManager.unlockRecipe(killer, recipe);
         killer.sendMessage(ChatColor.AQUA + "You feel knowledge flow through you...");
     }
 }
