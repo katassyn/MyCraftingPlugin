@@ -177,12 +177,12 @@ public class MenuListener implements Listener {
             handleRunemasterMenuClick(player, itemName);
         } else if (title.equals("Edit Runemaster Menu")) {
             handleEditRunemasterMenuClick(player, itemName);
-        } else if (title.equals("Conjurej Menu")) {
-            handleConjurejMenuClick(player, itemName);
-        } else if (title.equals("Edit Conjurej Menu")) {
-            handleEditConjurejMenuClick(player, itemName);
+        } else if (title.equals("Conjurer Menu")) {
+            handleConjurerMenuClick(player, itemName);
+        } else if (title.equals("Edit Conjurer Menu")) {
+            handleEditConjurerMenuClick(player, itemName);
         } else if (title.equals("Select Required Recipe")) {
-            handleConjurejRecipeSelectMenu(player, itemName);
+            handleConjurerRecipeSelectMenu(player, itemName);
         } else if (title.equals("Rune Crushing")) {
             handleRuneCrushingMenuClick(event, player, clickedItem, itemName);
         } else if (title.equals("Emilia Shop")) {
@@ -241,8 +241,8 @@ public class MenuListener implements Listener {
                 || title.equals("Runemaster Menu")
                 || title.equals("Edit Runemaster Menu")
                 || title.equals("Rune Crushing")
-                || title.equals("Conjurej Menu")
-                || title.equals("Edit Conjurej Menu")
+                || title.equals("Conjurer Menu")
+                || title.equals("Edit Conjurer Menu")
                 || title.equals("Select Required Recipe")
                 || title.equals("Emilia Shop")
                 || title.equals("Edit Emilia Shop")
@@ -353,10 +353,10 @@ public class MenuListener implements Listener {
                         break;
 
                     case 25:
-                        // Required recipe selector (Conjurej shop)
+                        // Required recipe selector (Conjurer shop)
                         AddRecipeMenu.saveGuiState(player.getUniqueId(), inv.getContents());
                         TemporaryData.setPlayerData(player.getUniqueId(), "edit_menu_title", title);
-                        ConjurejRecipeSelectMenu.open(player);
+                        ConjurerRecipeSelectMenu.open(player);
                         break;
 
                     default:
@@ -497,12 +497,12 @@ public class MenuListener implements Listener {
                         RunemasterMainMenu.open(player);
                     }
                 }
-                // Jeżeli to kategoria Conjurej Shop
-                else if (category.equalsIgnoreCase("conjurej_shop")) {
+                // Jeżeli to kategoria Conjurer Shop
+                else if (category.equalsIgnoreCase("conjurer_shop")) {
                     if (isEditMode) {
-                        MainMenu.openEditor(player);
+                        ConjurerMainMenu.openEditor(player);
                     } else {
-                        MainMenu.open(player);
+                        ConjurerMainMenu.open(player);
                     }
                 }
                 // Jeżeli to kategoria Mine Shop
@@ -599,7 +599,7 @@ public class MenuListener implements Listener {
                     return;
                 }
 
-                if (!isEditMode && "conjurej_shop".equalsIgnoreCase(category)) {
+                if (!isEditMode && "conjurer_shop".equalsIgnoreCase(category)) {
                     try (Connection conn = Main.getConnection();
                          PreparedStatement ps = conn.prepareStatement("SELECT required_recipe FROM recipes WHERE id=?")) {
                         ps.setInt(1, recipeId);
@@ -607,7 +607,7 @@ public class MenuListener implements Listener {
                             if (rs.next()) {
                                 String required = rs.getString("required_recipe");
                                 if (required != null && !required.isEmpty() &&
-                                        !ConjurejRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
+                                        !ConjurerRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
                                     player.sendMessage(ChatColor.RED + "This recipe is locked. Missing recipe: " + required);
 
                                     return;
@@ -712,8 +712,8 @@ public class MenuListener implements Listener {
                 if (rs.next()) {
                     String category = rs.getString("category");
                     String required = rs.getString("required_recipe");
-                    if ("conjurej_shop".equalsIgnoreCase(category) &&
-                            !ConjurejRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
+                    if ("conjurer_shop".equalsIgnoreCase(category) &&
+                            !ConjurerRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
                         player.sendMessage(ChatColor.RED + "You have not unlocked the " + required + " recipe.");
                         return;
                     }
@@ -1098,9 +1098,9 @@ public class MenuListener implements Listener {
             // Koszt
             ps.setDouble(15, TemporaryData.getCost(player.getUniqueId()));
 
-            // Required recipe (only for conjurej shop)
+            // Required recipe (only for conjurer shop)
             String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
-            if (!"conjurej_shop".equalsIgnoreCase(category)) {
+            if (!"conjurer_shop".equalsIgnoreCase(category)) {
                 required = null;
             }
             ps.setString(16, required);
@@ -1164,7 +1164,7 @@ public class MenuListener implements Listener {
 
             String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
             String category = TemporaryData.getLastCategory(player.getUniqueId());
-            if (!"conjurej_shop".equalsIgnoreCase(category)) {
+            if (!"conjurer_shop".equalsIgnoreCase(category)) {
                 required = null;
             }
             ps.setString(14, required);
@@ -1437,12 +1437,12 @@ public class MenuListener implements Listener {
         }
     }
 
-    private void handleConjurejMenuClick(Player player, String itemName) {
+    private void handleConjurerMenuClick(Player player, String itemName) {
         if (itemName == null) return;
 
         switch (itemName) {
-            case "Conjurej Shop":
-                CategoryMenu.open(player, "conjurej_shop", 0);
+            case "Conjurer Shop":
+                CategoryMenu.open(player, "conjurer_shop", 0);
                 break;
             case "Conjuration":
                 player.closeInventory();
@@ -1464,12 +1464,12 @@ public class MenuListener implements Listener {
         }
     }
 
-    private void handleEditConjurejMenuClick(Player player, String itemName) {
+    private void handleEditConjurerMenuClick(Player player, String itemName) {
         if (itemName == null) return;
 
         switch (itemName) {
-            case "Conjurej Shop":
-                CategoryMenu.openEditor(player, "conjurej_shop", 0);
+            case "Conjurer Shop":
+                CategoryMenu.openEditor(player, "conjurer_shop", 0);
                 break;
             case "Conjuration":
                 player.sendMessage(ChatColor.YELLOW + "Conjuration coming soon!");
@@ -1482,7 +1482,7 @@ public class MenuListener implements Listener {
         }
     }
 
-    private void handleConjurejRecipeSelectMenu(Player player, String itemName) {
+    private void handleConjurerRecipeSelectMenu(Player player, String itemName) {
         if (itemName == null) return;
 
         String title = (String) TemporaryData.getPlayerData(player.getUniqueId(), "edit_menu_title");

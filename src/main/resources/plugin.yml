@@ -90,13 +90,13 @@ commands:
     description: "Opens Zumpe shop menu in edit mode"
     usage: /edit_zumpe
     permission: mycraftingplugin.editlayout
-  conjurej_shop:
-    description: "Opens the Conjurej menu"
-    usage: /conjurej_shop
+  conjurer_shop:
+    description: "Opens the Conjurer menu"
+    usage: /conjurer_shop
     permission: mycraftingplugin.use
-  edit_conjurej_shop:
-    description: "Opens the Conjurej menu in edit mode"
-    usage: /edit_conjurej_shop
+  edit_conjurer_shop:
+    description: "Opens the Conjurer menu in edit mode"
+    usage: /edit_conjurer_shop
     permission: mycraftingplugin.editlayout
   testjewels:
     description: Test jewel detection system

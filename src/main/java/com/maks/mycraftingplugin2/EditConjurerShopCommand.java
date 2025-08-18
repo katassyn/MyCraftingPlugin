@@ -7,9 +7,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * /edit_conjurej_shop - Opens the Conjurej main menu in edit mode.
+ * /edit_conjurer_shop - Opens the Conjurer main menu in edit mode.
  */
-public class EditConjurejShopCommand implements CommandExecutor {
+public class EditConjurerShopCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -25,7 +25,7 @@ public class EditConjurejShopCommand implements CommandExecutor {
             return true;
         }
 
-        ConjurejMainMenu.openEditor(player);
+        ConjurerMainMenu.openEditor(player);
         return true;
     }
 }
