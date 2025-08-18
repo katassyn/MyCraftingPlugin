@@ -23,7 +23,6 @@ public class ConjurejShopCommand implements CommandExecutor {
             player.sendMessage(ChatColor.RED + "You must be at least level 80 to use this command.");
             return true;
         }
-
         ConjurejMainMenu.open(player);
         return true;
     }
