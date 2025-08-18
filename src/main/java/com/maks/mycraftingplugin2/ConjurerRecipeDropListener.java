@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
  * Handles dropping of Conjurer recipes from MythicMobs.
  * Checks common MythicMobs metadata keys to identify the mob
  * without requiring a direct dependency on the MythicMobs API.
+
  */
 public class ConjurerRecipeDropListener implements Listener {
 
