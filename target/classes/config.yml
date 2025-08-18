@@ -6,4 +6,4 @@ database:
   password: ""
 
 # Enable debug mode (1 = enabled, 0 = disabled)
-debug: 1
+debug: 0
