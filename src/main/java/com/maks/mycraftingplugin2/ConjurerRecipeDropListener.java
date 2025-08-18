@@ -6,8 +6,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
-
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -18,7 +16,6 @@ import java.util.stream.Collectors;
  * Handles dropping of Conjurer recipes from MythicMobs.
  * Checks common MythicMobs metadata keys to identify the mob
  * without requiring a direct dependency on the MythicMobs API.
-
  */
 public class ConjurerRecipeDropListener implements Listener {
 
@@ -41,10 +38,10 @@ public class ConjurerRecipeDropListener implements Listener {
         }
         if (mobId == null) return;
 
-        String mobsRaw = Main.getInstance().getConfig().getString("conjurer.mobs", "");
-        List<String> allowed = Arrays.stream(mobsRaw.split("\\R"))
-                .map(line -> line.trim().toLowerCase(Locale.ROOT))
-                .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+        List<String> allowed = Main.getInstance().getConfig()
+                .getStringList("conjurer.mobs").stream()
+                .map(s -> s.replace(",", "").trim().toLowerCase(Locale.ROOT))
+                .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
         if (!allowed.contains(mobId.toLowerCase(Locale.ROOT))) return;
 

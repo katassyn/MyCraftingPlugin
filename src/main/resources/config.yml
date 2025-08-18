@@ -9,9 +9,9 @@ database:
 debug: 1
 
 conjurer:
-  mobs: |
-    # newline-separated MythicMob IDs (case-insensitive)
-    # obstinate_toltec_warrior
-    # obstinate_toltec_hunter
-    # obstinate_toltec_shaman
+  mobs:
+    # MythicMob IDs (case-insensitive, comma optional)
+    - obstinate_toltec_warrior,
+    - obstinate_toltec_hunter,
+    - obstinate_toltec_shaman,
   recipe_drop_chance: 0.001
