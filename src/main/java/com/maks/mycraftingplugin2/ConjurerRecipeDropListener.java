@@ -1,11 +1,11 @@
 package com.maks.mycraftingplugin2;
 
 import org.bukkit.ChatColor;
+import io.lumine.mythic.bukkit.events.MythicMobDeathEvent;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDeathEvent;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -14,33 +14,23 @@ import java.util.stream.Collectors;
 
 /**
  * Handles dropping of Conjurer recipes from MythicMobs.
- * Checks common MythicMobs metadata keys to identify the mob
- * without requiring a direct dependency on the MythicMobs API.
+ * Relies on the MythicMobDeathEvent provided by the MythicMobs API
+ * to obtain the mob's internal name for matching against configured drops.
  */
 public class ConjurerRecipeDropListener implements Listener {
 
     private final Random random = new Random();
 
     @EventHandler
-    public void onEntityDeath(EntityDeathEvent event) {
-        Player killer = event.getEntity().getKiller();
-        if (killer == null) return;
-
-        Entity entity = event.getEntity();
-
-        String mobId = null;
-        if (entity.hasMetadata("MythicType")) {
-            mobId = entity.getMetadata("MythicType").get(0).asString();
-        } else if (entity.hasMetadata("MythicMobType")) {
-            mobId = entity.getMetadata("MythicMobType").get(0).asString();
-        } else if (entity.hasMetadata("MythicMob")) {
-            mobId = entity.getMetadata("MythicMob").get(0).asString();
-        }
-        if (mobId == null) {
-            Main.getInstance().getLogger().info("Entity killed without MythicMob metadata: " + entity.getType());
+    public void onMythicMobDeath(MythicMobDeathEvent event) {
+        Entity killerEntity = event.getKiller();
+        if (!(killerEntity instanceof Player)) {
+            Main.getInstance().getLogger().info("Mythic mob died without a player killer");
             return;
         }
+        Player killer = (Player) killerEntity;
 
+        String mobId = event.getMobType().getInternalName();
         Main.getInstance().getLogger().info("Mythic mob killed: " + mobId);
 
         List<String> allowed = Main.getInstance().getConfig()
