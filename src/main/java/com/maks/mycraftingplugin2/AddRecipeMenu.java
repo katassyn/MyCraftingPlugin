@@ -27,6 +27,11 @@ public class AddRecipeMenu {
         // Jeśli gracz ma zapisany stan GUI, przywróć go
         if (guiStates.containsKey(player.getUniqueId())) {
             inv.setContents(guiStates.get(player.getUniqueId()));
+            if ("conjurej_shop".equalsIgnoreCase(category)) {
+                String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
+                String display = (required != null) ? required : "None";
+                inv.setItem(25, createInfoItem("Required Recipe", display));
+            }
         } else {
             // Ustaw pola na wymagane przedmioty (sloty 0-9)
             for (int i = 0; i < 10; i++) {
@@ -60,6 +65,15 @@ public class AddRecipeMenu {
             inv.setItem(22, createMenuItem(
                     Material.EMERALD, ChatColor.GREEN + "Save"
             ));
+
+            // Required recipe selector for Conjurej shop
+            if ("conjurej_shop".equalsIgnoreCase(category)) {
+                String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
+                String display = (required != null) ? required : "None";
+                inv.setItem(25, createInfoItem("Required Recipe", display));
+            } else {
+                TemporaryData.removeRequiredRecipe(player.getUniqueId());
+            }
 
             // Przycisk "Back" (slot 24)
             inv.setItem(24, createMenuItem(

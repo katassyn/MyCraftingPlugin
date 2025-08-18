@@ -24,60 +24,85 @@ public class EditRecipeMenu {
         // Wypełniamy interfejs szkłem
         fillWithGlass(inv);
 
-        // Pobierz dane receptury z bazy danych
-        try (Connection conn = Main.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE id = ?")) {
+        // Przywróć zapisany stan GUI jeśli istnieje
+        ItemStack[] saved = AddRecipeMenu.getGuiState(player.getUniqueId());
+        if (saved != null) {
+            inv.setContents(saved);
+            String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
+            if (required != null) {
+                inv.setItem(25, createInfoItem("Required Recipe", required));
+            }
+        } else {
+            // Pobierz dane receptury z bazy danych
+            try (Connection conn = Main.getConnection();
+                 PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE id = ?")) {
 
-            ps.setInt(1, recipeId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    // Ustaw wymagane przedmioty (sloty 0-9)
-                    for (int i = 0; i < 10; i++) {
-                        String itemData = rs.getString("required_item_" + (i + 1));
-                        if (itemData != null) {
-                            ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
-                            inv.setItem(i, requiredItem);
+                ps.setInt(1, recipeId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        // Ustaw wymagane przedmioty (sloty 0-9)
+                        for (int i = 0; i < 10; i++) {
+                            String itemData = rs.getString("required_item_" + (i + 1));
+                            if (itemData != null) {
+                                ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
+                                inv.setItem(i, requiredItem);
+                            } else {
+                                inv.setItem(i, createMenuItem(
+                                        Material.GRAY_STAINED_GLASS_PANE,
+                                        ChatColor.YELLOW + "Required Item " + (i + 1)
+                                ));
+                            }
+                        }
+
+                        // Przedmiot wynikowy (slot 13)
+                        ItemStack resultItem = ItemStackSerializer.deserialize(rs.getString("result_item"));
+                        inv.setItem(13, resultItem);
+
+                        // Szansa na sukces (slot 20)
+                        double successChance = rs.getDouble("success_chance");
+                        inv.setItem(20, createInfoItem(
+                                "Success Chance", successChance + "%"
+                        ));
+                        TemporaryData.setSuccessChance(player.getUniqueId(), successChance);
+
+                        // Koszt (slot 21)
+                        double cost = rs.getDouble("cost");
+                        inv.setItem(21, createInfoItem(
+                                "Cost", formatCost(cost)
+                        ));
+                        TemporaryData.setCost(player.getUniqueId(), cost);
+
+                        // Przycisk "Save" (slot 22)
+                        inv.setItem(22, createMenuItem(
+                                Material.EMERALD, ChatColor.GREEN + "Save"
+                        ));
+
+                        // Przycisk "Delete" (slot 23)
+                        inv.setItem(23, createMenuItem(
+                                Material.BARRIER, ChatColor.RED + "Delete"
+                        ));
+
+                        String category = rs.getString("category");
+                        if ("conjurej_shop".equalsIgnoreCase(category)) {
+                            String required = rs.getString("required_recipe");
+                            TemporaryData.setRequiredRecipe(player.getUniqueId(), required);
+                            String display = (required != null) ? required : "None";
+                            inv.setItem(25, createInfoItem("Required Recipe", display));
                         } else {
-                            inv.setItem(i, createMenuItem(
-                                    Material.GRAY_STAINED_GLASS_PANE,
-                                    ChatColor.YELLOW + "Required Item " + (i + 1)
-                            ));
+                            TemporaryData.removeRequiredRecipe(player.getUniqueId());
                         }
                     }
-
-                    // Przedmiot wynikowy (slot 13)
-                    ItemStack resultItem = ItemStackSerializer.deserialize(rs.getString("result_item"));
-                    inv.setItem(13, resultItem);
-
-                    // Szansa na sukces (slot 20)
-                    double successChance = rs.getDouble("success_chance");
-                    inv.setItem(20, createInfoItem(
-                            "Success Chance", successChance + "%"
-                    ));
-                    TemporaryData.setSuccessChance(player.getUniqueId(), successChance);
-
-                    // Koszt (slot 21)
-                    double cost = rs.getDouble("cost");
-                    inv.setItem(21, createInfoItem(
-                            "Cost", formatCost(cost)
-                    ));
-                    TemporaryData.setCost(player.getUniqueId(), cost);
-
-                    // Przycisk "Save" (slot 22)
-                    inv.setItem(22, createMenuItem(
-                            Material.EMERALD, ChatColor.GREEN + "Save"
-                    ));
-
-                    // Przycisk "Delete" (slot 23)
-                    inv.setItem(23, createMenuItem(
-                            Material.BARRIER, ChatColor.RED + "Delete"
-                    ));
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                player.sendMessage(ChatColor.RED + "Error loading recipe data!");
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            player.sendMessage(ChatColor.RED + "Error loading recipe data!");
         }
+
+        // Przycisk "Back" (slot 24)
+        inv.setItem(24, createMenuItem(
+                Material.ARROW, ChatColor.YELLOW + "Back"
+        ));
 
         player.openInventory(inv);
     }
