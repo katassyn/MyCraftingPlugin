@@ -58,10 +58,13 @@ public class Main extends JavaPlugin {
         getCommand("edit_zumpe").setExecutor(new EditZumpeCommand());
         getCommand("testjewels").setExecutor(new TestJewelsCommand());
         getCommand("testpouch").setExecutor(new TestPouchCommand());
+        getCommand("conjurej_shop").setExecutor(new ConjurejShopCommand());
+        getCommand("edit_conjurej_shop").setExecutor(new EditConjurejShopCommand());
 
         // Rejestracja listenerów
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
+        getServer().getPluginManager().registerEvents(new ConjurejRecipeDropListener(), this);
 
         // Schedule daily transaction cleanup at midnight
         setupTransactionCleanupTask();
@@ -159,6 +162,25 @@ public class Main extends JavaPlugin {
                 """;
 
                 statement.executeUpdate(createTable);
+
+                String updateRecipesTable = """
+                    ALTER TABLE recipes
+                    ADD COLUMN IF NOT EXISTS required_recipe VARCHAR(255)
+                """;
+                try {
+                    statement.executeUpdate(updateRecipesTable);
+                } catch (SQLException e) {
+                    getLogger().info("Recipes table update skipped: " + e.getMessage());
+                }
+
+                String createConjurejTable = """
+                    CREATE TABLE IF NOT EXISTS conjurej_recipes (
+                        player_uuid VARCHAR(36),
+                        recipe VARCHAR(255),
+                        PRIMARY KEY (player_uuid, recipe)
+                    )
+                """;
+                statement.executeUpdate(createConjurejTable);
 
                 // Create Emilia shop tables if they don't exist
                 String createEmiliaItemsTable = """

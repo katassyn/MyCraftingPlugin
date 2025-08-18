@@ -7,3 +7,6 @@ database:
 
 # Enable debug mode (1 = enabled, 0 = disabled)
 debug: 1
+
+conjurej:
+  mob_ids: []

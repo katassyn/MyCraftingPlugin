@@ -68,6 +68,25 @@ public class TemporaryData {
         costs.remove(playerUUID);
     }
 
+    // Required recipe for Conjurej shop crafting
+    private static Map<UUID, String> requiredRecipes = new HashMap<>();
+
+    public static void setRequiredRecipe(UUID playerUUID, String recipe) {
+        if (recipe == null) {
+            requiredRecipes.remove(playerUUID);
+        } else {
+            requiredRecipes.put(playerUUID, recipe);
+        }
+    }
+
+    public static String getRequiredRecipe(UUID playerUUID) {
+        return requiredRecipes.get(playerUUID);
+    }
+
+    public static void removeRequiredRecipe(UUID playerUUID) {
+        requiredRecipes.remove(playerUUID);
+    }
+
     // Przechowywanie ostatnio odwiedzonej kategorii przez gracza
     private static Map<UUID, String> lastCategory = new HashMap<>();
 
