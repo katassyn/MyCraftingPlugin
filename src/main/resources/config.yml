@@ -9,4 +9,8 @@ database:
 debug: 1
 
 conjurej:
-  mob_ids: []
+  mobs: |
+    # obstinate_toltec_warrior
+    # obstinate_toltec_hunter
+    # obstinate_toltec_shaman
+  recipe_drop_chance: 0.001

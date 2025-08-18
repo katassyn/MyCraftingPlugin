@@ -497,6 +497,14 @@ public class MenuListener implements Listener {
                         RunemasterMainMenu.open(player);
                     }
                 }
+                // Jeżeli to kategoria Conjurej Shop
+                else if (category.equalsIgnoreCase("conjurej_shop")) {
+                    if (isEditMode) {
+                        MainMenu.openEditor(player);
+                    } else {
+                        MainMenu.open(player);
+                    }
+                }
                 // Jeżeli to kategoria Mine Shop
                 else if (category.equalsIgnoreCase("mine_shop")) {
                     player.closeInventory();
@@ -589,6 +597,25 @@ public class MenuListener implements Listener {
                 if (recipeId == -1) {
                     player.sendMessage(ChatColor.RED + "Invalid recipe.");
                     return;
+                }
+
+                if (!isEditMode && "conjurej_shop".equalsIgnoreCase(category)) {
+                    try (Connection conn = Main.getConnection();
+                         PreparedStatement ps = conn.prepareStatement("SELECT required_recipe FROM recipes WHERE id=?")) {
+                        ps.setInt(1, recipeId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                String required = rs.getString("required_recipe");
+                                if (required != null && !required.isEmpty() &&
+                                        !ConjurejRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
+                                    player.sendMessage(ChatColor.RED + "This recipe is locked.");
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 // W zależności czy edytujemy, czy oglądamy
@@ -1417,7 +1444,16 @@ public class MenuListener implements Listener {
                 CategoryMenu.open(player, "conjurej_shop", 0);
                 break;
             case "Conjuration":
-                player.sendMessage(ChatColor.YELLOW + "Conjuration coming soon!");
+                player.closeInventory();
+                boolean hadPerm = player.hasPermission("mycraftingplugin.use");
+                if (hadPerm) {
+                    player.performCommand("conjuration_menu");
+                } else {
+                    PermissionAttachment attachment = player.addAttachment(Main.getInstance());
+                    attachment.setPermission("mycraftingplugin.use", true);
+                    player.performCommand("conjuration_menu");
+                    player.removeAttachment(attachment);
+                }
                 break;
             case "Back":
                 MainMenu.open(player);

@@ -6,10 +6,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
-
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Handles dropping of Conjurej recipes from MythicMobs.
@@ -18,7 +19,6 @@ import java.util.UUID;
  */
 public class ConjurejRecipeDropListener implements Listener {
 
-    private static final double DROP_CHANCE = 0.001; // 0.1%
     private final Random random = new Random();
 
     @EventHandler
@@ -30,10 +30,15 @@ public class ConjurejRecipeDropListener implements Listener {
         if (!entity.hasMetadata("MythicType")) return;
         String mobId = entity.getMetadata("MythicType").get(0).asString();
 
-        List<String> allowed = Main.getInstance().getConfig().getStringList("conjurej.mob_ids");
+        String mobsRaw = Main.getInstance().getConfig().getString("conjurej.mobs", "");
+        List<String> allowed = Arrays.stream(mobsRaw.split("\\R"))
+                .map(String::trim)
+                .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+                .collect(Collectors.toList());
         if (!allowed.contains(mobId)) return;
 
-        if (random.nextDouble() >= DROP_CHANCE) return;
+        double dropChance = Main.getInstance().getConfig().getDouble("conjurej.recipe_drop_chance", 0.001);
+        if (random.nextDouble() >= dropChance) return;
 
         UUID uuid = killer.getUniqueId();
         List<String> locked = ConjurejRecipeUnlockManager.getLockedRecipes(uuid);
