@@ -48,12 +48,12 @@ public class CategoryMenu {
                     List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
                     // Format as String to avoid byte conversion issues
                     lore.add(ChatColor.GRAY + "Recipe ID: " + String.valueOf(recipeId));
-
                     if ("conjurej_shop".equalsIgnoreCase(category) && required != null && !required.isEmpty()) {
                         lore.add(ChatColor.GOLD + "Requires: " + required);
                         if (!ConjurejRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
                             lore.add(ChatColor.RED + "Locked");
                         }
+
                     }
                     meta.setLore(lore);
                     resultItem.setItemMeta(meta);
