@@ -7,9 +7,9 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * Manages unlocking and tracking of Conjurej recipes for players.
+ * Manages unlocking and tracking of Conjurer recipes for players.
  */
-public class ConjurejRecipeUnlockManager {
+public class ConjurerRecipeUnlockManager {
 
     private static final List<String> ALL_RECIPES = Arrays.asList(
             "Runic Tether",
@@ -31,7 +31,7 @@ public class ConjurejRecipeUnlockManager {
         if (recipe == null || recipe.isEmpty()) return true;
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "SELECT 1 FROM conjurej_recipes WHERE player_uuid=? AND recipe=?")) {
+                     "SELECT 1 FROM conjurer_recipes WHERE player_uuid=? AND recipe=?")) {
             ps.setString(1, uuid.toString());
             ps.setString(2, recipe);
             try (ResultSet rs = ps.executeQuery()) {
@@ -46,7 +46,7 @@ public class ConjurejRecipeUnlockManager {
     public static void unlockRecipe(Player player, String recipe) {
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "INSERT IGNORE INTO conjurej_recipes (player_uuid, recipe) VALUES (?, ?)")) {
+                     "INSERT IGNORE INTO conjurer_recipes (player_uuid, recipe) VALUES (?, ?)")) {
             ps.setString(1, player.getUniqueId().toString());
             ps.setString(2, recipe);
             ps.executeUpdate();
@@ -60,7 +60,7 @@ public class ConjurejRecipeUnlockManager {
         List<String> locked = new ArrayList<>(ALL_RECIPES);
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "SELECT recipe FROM conjurej_recipes WHERE player_uuid=?")) {
+                     "SELECT recipe FROM conjurer_recipes WHERE player_uuid=?")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

@@ -9,15 +9,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 /**
- * Main menu for the Conjurej system. Provides access to the
- * conjurej crafting shop and a placeholder for future features.
+ * Main menu for the Conjurer system. Provides access to the
+ * conjurer crafting shop and a placeholder for future features.
  */
-public class ConjurejMainMenu {
+public class ConjurerMainMenu {
 
     public static void open(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Conjurej Menu");
+        Inventory inv = Bukkit.createInventory(null, 27, "Conjurer Menu");
 
-        inv.setItem(11, createMenuItem(Material.BOOK, ChatColor.GREEN + "Conjurej Shop"));
+        inv.setItem(11, createMenuItem(Material.BOOK, ChatColor.GREEN + "Conjurer Shop"));
         inv.setItem(15, createMenuItem(Material.ENCHANTED_BOOK, ChatColor.YELLOW + "Conjuration"));
 
         fillWithGlass(inv);
@@ -25,9 +25,9 @@ public class ConjurejMainMenu {
     }
 
     public static void openEditor(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Edit Conjurej Menu");
+        Inventory inv = Bukkit.createInventory(null, 27, "Edit Conjurer Menu");
 
-        inv.setItem(11, createMenuItem(Material.BOOK, ChatColor.GREEN + "Conjurej Shop"));
+        inv.setItem(11, createMenuItem(Material.BOOK, ChatColor.GREEN + "Conjurer Shop"));
         inv.setItem(15, createMenuItem(Material.ENCHANTED_BOOK, ChatColor.YELLOW + "Conjuration"));
 
         fillWithGlass(inv);

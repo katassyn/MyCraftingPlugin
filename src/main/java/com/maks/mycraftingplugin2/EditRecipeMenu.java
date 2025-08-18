@@ -83,7 +83,7 @@ public class EditRecipeMenu {
                         ));
 
                         String category = rs.getString("category");
-                        if ("conjurej_shop".equalsIgnoreCase(category)) {
+                        if ("conjurer_shop".equalsIgnoreCase(category)) {
                             String required = rs.getString("required_recipe");
                             TemporaryData.setRequiredRecipe(player.getUniqueId(), required);
                             String display = (required != null) ? required : "None";
