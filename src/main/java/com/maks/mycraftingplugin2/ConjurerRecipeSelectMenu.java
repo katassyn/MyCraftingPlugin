@@ -11,14 +11,14 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.List;
 
 /**
- * Menu for selecting which Conjurej recipe is required for a crafting recipe.
+ * Menu for selecting which Conjurer recipe is required for a crafting recipe.
  */
-public class ConjurejRecipeSelectMenu {
+public class ConjurerRecipeSelectMenu {
 
     public static void open(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, "Select Required Recipe");
 
-        List<String> recipes = ConjurejRecipeUnlockManager.getAllRecipes();
+        List<String> recipes = ConjurerRecipeUnlockManager.getAllRecipes();
         int index = 0;
         for (String recipe : recipes) {
             ItemStack item = new ItemStack(Material.PAPER);
