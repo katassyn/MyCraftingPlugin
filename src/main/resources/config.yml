@@ -10,6 +10,7 @@ debug: 1
 
 conjurer:
   mobs: |
+    # newline-separated MythicMob IDs (case-insensitive)
     # obstinate_toltec_warrior
     # obstinate_toltec_hunter
     # obstinate_toltec_shaman
