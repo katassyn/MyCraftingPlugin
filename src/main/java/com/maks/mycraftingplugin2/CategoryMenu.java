@@ -48,9 +48,12 @@ public class CategoryMenu {
                     List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
                     // Format as String to avoid byte conversion issues
                     lore.add(ChatColor.GRAY + "Recipe ID: " + String.valueOf(recipeId));
-                    if ("conjurej_shop".equalsIgnoreCase(category) && required != null && !required.isEmpty() &&
-                            !ConjurejRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
-                        lore.add(ChatColor.RED + "Locked");
+                    if ("conjurej_shop".equalsIgnoreCase(category) && required != null && !required.isEmpty()) {
+                        lore.add(ChatColor.GOLD + "Requires: " + required);
+                        if (!ConjurejRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
+                            lore.add(ChatColor.RED + "Locked");
+                        }
+
                     }
                     meta.setLore(lore);
                     resultItem.setItemMeta(meta);
@@ -106,6 +109,7 @@ public class CategoryMenu {
             while (rs.next()) {
                 ItemStack resultItem = ItemStackSerializer.deserialize(rs.getString("result_item"));
                 int recipeId = rs.getInt("id");
+                String required = rs.getString("required_recipe");
 
                 // Store recipe ID in PersistentDataContainer
                 ItemMeta meta = resultItem.getItemMeta();
@@ -118,6 +122,9 @@ public class CategoryMenu {
                     List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
                     // Format as String to avoid byte conversion issues
                     lore.add(ChatColor.GRAY + "Recipe ID: " + String.valueOf(recipeId));
+                    if ("conjurej_shop".equalsIgnoreCase(category) && required != null && !required.isEmpty()) {
+                        lore.add(ChatColor.GOLD + "Requires: " + required);
+                    }
                     meta.setLore(lore);
                     resultItem.setItemMeta(meta);
                 }

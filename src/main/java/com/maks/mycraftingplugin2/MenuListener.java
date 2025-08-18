@@ -608,7 +608,8 @@ public class MenuListener implements Listener {
                                 String required = rs.getString("required_recipe");
                                 if (required != null && !required.isEmpty() &&
                                         !ConjurejRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
-                                    player.sendMessage(ChatColor.RED + "This recipe is locked.");
+                                    player.sendMessage(ChatColor.RED + "This recipe is locked. Missing recipe: " + required);
+
                                     return;
                                 }
                             }
