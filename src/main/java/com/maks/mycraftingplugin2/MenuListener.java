@@ -30,7 +30,7 @@ public class MenuListener implements Listener {
         String title = event.getView().getTitle();
 
         // Debugging flag
-        int debuggingFlag = 1; // Set to 0 to disable debug
+        int debuggingFlag = 0; // Set to 0 to disable debug
 
         if (debuggingFlag == 1) {
             Bukkit.getLogger().info("[MenuListener] InventoryCloseEvent - Title: " + title + 
