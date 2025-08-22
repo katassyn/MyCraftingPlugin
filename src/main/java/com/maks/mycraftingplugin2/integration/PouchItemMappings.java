@@ -177,6 +177,22 @@ public class PouchItemMappings {
         itemMappings.put("[ II ] Ancient Grain Sheaf", "farmer_ancient_grain_II");
         itemMappings.put("[ III ] Ancient Grain Sheaf", "farmer_ancient_grain_III");
 
+        // BEES category items
+        itemMappings.put("[ I ] Honey Bottle", "honey_quality_basic");
+        itemMappings.put("[ II ] Honey Bottle", "honey_quality_rare");
+        itemMappings.put("[ III ] Honey Bottle", "honey_quality_legendary");
+        itemMappings.put("[ I ] Queen Bee", "queen_bee_I");
+        itemMappings.put("[ II ] Queen Bee", "queen_bee_II");
+        itemMappings.put("[ III ] Queen Bee", "queen_bee_III");
+        itemMappings.put("[ I ] Worker Bee", "worker_bee_I");
+        itemMappings.put("[ II ] Worker Bee", "worker_bee_II");
+        itemMappings.put("[ III ] Worker Bee", "worker_bee_III");
+        itemMappings.put("[ I ] Drone Bee", "drone_bee_I");
+        itemMappings.put("[ II ] Drone Bee", "drone_bee_II");
+        itemMappings.put("[ III ] Drone Bee", "drone_bee_III");
+        itemMappings.put("[ I ] Bee Larva", "larva_I");
+        itemMappings.put("[ II ] Bee Larva", "larva_II");
+        itemMappings.put("[ III ] Bee Larva", "larva_III");
         // CURRENCY category items
         itemMappings.put("DrakenMelon", "draken");
         itemMappings.put("Glided Sunflower", "clover");
