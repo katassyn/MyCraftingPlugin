@@ -193,7 +193,6 @@ public class PouchItemMappings {
         itemMappings.put("[ I ] Bee Larva", "larva_I");
         itemMappings.put("[ II ] Bee Larva", "larva_II");
         itemMappings.put("[ III ] Bee Larva", "larva_III");
-
         // CURRENCY category items
         itemMappings.put("DrakenMelon", "draken");
         itemMappings.put("Glided Sunflower", "clover");
