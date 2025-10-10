@@ -569,7 +569,24 @@ public class MenuListener implements Listener {
                         ConjurerMainMenu.open(player);
                     }
                 }
-                // JeĹĽeli to kategoria Mine Shop
+                // Jeżeli to kategoria Scientist
+                else if (category.equalsIgnoreCase("scientist")) {
+                    if (isEditMode) {
+                        MainMenu.openEditor(player);
+                    } else {
+                        player.closeInventory();
+                        boolean hadPerm = player.hasPermission("scientist.use");
+                        if (hadPerm) {
+                            player.performCommand("scientist_gui");
+                        } else {
+                            PermissionAttachment attachment = player.addAttachment(Main.getInstance());
+                            attachment.setPermission("scientist.use", true);
+                            player.performCommand("scientist_gui");
+                            player.removeAttachment(attachment);
+                        }
+                    }
+                }
+                // Jeżeli to kategoria Mine Shop
                 else if (category.equalsIgnoreCase("mine_shop")) {
                     player.closeInventory();
                     boolean hadPerm = player.hasPermission("minesystemplugin.mine");
