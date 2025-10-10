@@ -24,7 +24,7 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
-        // Ładowanie domyślnej konfiguracji
+        // Ĺadowanie domyĹ›lnej konfiguracji
         saveDefaultConfig();
 
         // Inicjalizacja bazy danych i ekonomii
@@ -60,17 +60,31 @@ public class Main extends JavaPlugin {
         getCommand("testpouch").setExecutor(new TestPouchCommand());
         getCommand("conjurer_shop").setExecutor(new ConjurerShopCommand());
         getCommand("edit_conjurer_shop").setExecutor(new EditConjurerShopCommand());
+        getCommand("scientist").setExecutor(new ScientistCommand());
+        getCommand("edit_scientist").setExecutor(new EditScientistCommand());
+        getCommand("grave_shop").setExecutor(new GraveShopCommand());
+        getCommand("edit_grave_shop").setExecutor(new EditGraveShopCommand());
+        getCommand("dungeon_shop").setExecutor(new DungeonShopCommand());
+        getCommand("edit_dungeon_shop").setExecutor(new EditDungeonShopCommand());
+        getCommand("zoo_keeper").setExecutor(new ZooKeeperCommand());
+        getCommand("edit_zoo_keeper").setExecutor(new EditZooKeeperCommand());
+        getCommand("imprinting").setExecutor(new ImprintingCommand());
+        getCommand("set_crushing").setExecutor(new SetCrushingCommand());
+        getCommand("hefajsos").setExecutor(new HefajsosCommand());
 
-        // Rejestracja listenerów
+        // Rejestracja listenerĂłw
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
         getServer().getPluginManager().registerEvents(new ConjurerRecipeDropListener(), this);
+        getServer().getPluginManager().registerEvents(new ImprintingListener(), this);
+        getServer().getPluginManager().registerEvents(new HefajsosListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerQuitListener(), this);
 
         // Schedule daily transaction cleanup at midnight
         setupTransactionCleanupTask();
 
         ConsoleCommandSender console = Bukkit.getConsoleSender();
-        console.sendMessage("§aMyCraftingPlugin2 has been enabled!");
+        console.sendMessage("Â§aMyCraftingPlugin2 has been enabled!");
     }
 
     @Override
@@ -79,7 +93,7 @@ public class Main extends JavaPlugin {
             dataSource.close();
         }
         ConsoleCommandSender console = Bukkit.getConsoleSender();
-        console.sendMessage("§cMyCraftingPlugin2 has been disabled!");
+        console.sendMessage("Â§cMyCraftingPlugin2 has been disabled!");
     }
 
     public static Main getInstance() {
@@ -112,9 +126,9 @@ public class Main extends JavaPlugin {
         hikariConfig.setUsername(username);
         hikariConfig.setPassword(password);
 
-        // Ustawienia poola połączeń
-        hikariConfig.setMaximumPoolSize(10);
-        hikariConfig.setMinimumIdle(5);
+        // Ustawienia poola poĹ‚Ä…czeĹ„
+        hikariConfig.setMaximumPoolSize(22); // Increased for 30+ players - crafting operations
+        hikariConfig.setMinimumIdle(10); // Medium priority plugin - stable connections
         hikariConfig.setIdleTimeout(300000); // 5 minut
         hikariConfig.setConnectionTimeout(10000); // 10 sekund
         hikariConfig.setMaxLifetime(1800000); // 30 minut
@@ -136,7 +150,7 @@ public class Main extends JavaPlugin {
             dataSource = new HikariDataSource(hikariConfig);
             getLogger().info("Successfully initialized HikariCP connection pool!");
 
-            // Utworzenie tabeli recipes jeśli nie istnieje
+            // Utworzenie tabeli recipes jeĹ›li nie istnieje
             try (Connection conn = getConnection();
                  var statement = conn.createStatement()) {
 

@@ -17,7 +17,9 @@ public class CategoryMenu {
     private static final int ITEMS_PER_PAGE = 45; // Sloty 0-44 na przedmioty
 
     public static void open(Player player, String category, int page) {
-        Inventory inv = Bukkit.createInventory(null, 54, "Category: " + category);
+        Inventory inv = Bukkit.createInventory(null, 54, buildTitle(category, false));
+        TemporaryData.setLastCategory(player.getUniqueId(), category);
+        TemporaryData.setPage(player.getUniqueId(), category, page);
 
         // Wypełnij pustą przestrzeń białymi szybami
         fillWithGlass(inv);
@@ -48,11 +50,12 @@ public class CategoryMenu {
                     List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
                     // Format as String to avoid byte conversion issues
                     lore.add(ChatColor.GRAY + "Recipe ID: " + String.valueOf(recipeId));
-                    if ("conjurer_shop".equalsIgnoreCase(category) && required != null && !required.isEmpty()) {
+                    if (("conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category)) && required != null && !required.isEmpty()) {
                         lore.add(ChatColor.GOLD + "Requires: " + required);
-                        if (!ConjurerRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
-                            lore.add(ChatColor.RED + "Locked");
-                        }
+                        boolean unlocked = "conjurer_shop".equalsIgnoreCase(category)
+                                ? ConjurerRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)
+                                : ScientistResearchUnlockHelper.isUnlocked(player.getUniqueId(), required);
+                        if (!unlocked) lore.add(ChatColor.RED + "Locked");
 
                     }
                     meta.setLore(lore);
@@ -92,7 +95,7 @@ public class CategoryMenu {
     }
 
     public static void openEditor(Player player, String category, int page) {
-        Inventory inv = Bukkit.createInventory(null, 54, "Edit Category: " + category);
+        Inventory inv = Bukkit.createInventory(null, 54, buildTitle(category, true));
 
         // Wypełnij pustą przestrzeń białymi szybami
         fillWithGlass(inv);
@@ -122,7 +125,7 @@ public class CategoryMenu {
                     List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
                     // Format as String to avoid byte conversion issues
                     lore.add(ChatColor.GRAY + "Recipe ID: " + String.valueOf(recipeId));
-                    if ("conjurer_shop".equalsIgnoreCase(category) && required != null && !required.isEmpty()) {
+                    if (("conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category)) && required != null && !required.isEmpty()) {
                         lore.add(ChatColor.GOLD + "Requires: " + required);
                     }
                     meta.setLore(lore);
@@ -175,11 +178,10 @@ public class CategoryMenu {
     }
 
     private static void fillWithGlass(Inventory inv) {
-        // Changed to BLACK_STAINED_GLASS_PANE for consistency
         ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = glass.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(" ");
+            meta.setDisplayName("");
             glass.setItemMeta(meta);
         }
 
@@ -189,4 +191,14 @@ public class CategoryMenu {
             }
         }
     }
+
+    private static String buildTitle(String category, boolean edit) {
+        if (category != null && category.equalsIgnoreCase("scientist")) {
+            return edit
+                    ? ChatColor.DARK_PURPLE + "Edit Scientist Crafting"
+                    : ChatColor.DARK_PURPLE + "Scientist Crafting Menu";
+        }
+        return (edit ? "Edit Category: " : "Category: ") + category;
+    }
 }
+

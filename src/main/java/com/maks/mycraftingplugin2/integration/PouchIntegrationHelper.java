@@ -39,7 +39,7 @@ public class PouchIntegrationHelper {
     private static final Pattern STACK_PATTERN_X = Pattern.compile("\\sx(\\d+)\\b", Pattern.CASE_INSENSITIVE);
 
     // Debug flag
-    private static final boolean debugFlag = true; // Ustaw na true dla debugowania
+    private static final boolean debugFlag = false; // Ustaw na true dla debugowania
 
     // Cache for pouch item amounts
     private static final Map<String, Integer> pouchAmountCache = new HashMap<>();
@@ -808,6 +808,53 @@ public class PouchIntegrationHelper {
         String baseName2 = getBaseItemName(item2);
 
         return baseName1 != null && baseName2 != null && baseName1.equals(baseName2);
+    }
+
+    /**
+     * Add an item directly to the player's pouch
+     * @param player The player
+     * @param item The item to add
+     * @return true if the item was successfully added to the pouch
+     */
+    public static boolean addItemToPouch(Player player, ItemStack item) {
+        if (!isAPIAvailable() || item == null || item.getAmount() <= 0) {
+            return false;
+        }
+
+        String pouchItemId = getPouchItemId(item);
+        if (pouchItemId == null) {
+            return false;
+        }
+
+        try {
+            int stackMultiplier = getStackMultiplier(item);
+            int unitsToAdd = item.getAmount() * stackMultiplier;
+
+            // Add to pouch (positive amount)
+            Object result = removeItemMethod.invoke(pouchAPI, player.getUniqueId().toString(), pouchItemId, unitsToAdd);
+            boolean added = result instanceof Boolean && (Boolean) result;
+
+            if (added) {
+                // Update cache
+                updatePouchCache(player, pouchItemId, unitsToAdd);
+
+                // Update pouch GUI if open
+                updatePouchGUI(player);
+
+                if (debugFlag) {
+                    Bukkit.getLogger().info("[PouchIntegration] Successfully added " + unitsToAdd + " units of " + pouchItemId + " to pouch");
+                }
+                return true;
+            }
+
+            return false;
+        } catch (Exception e) {
+            if (debugFlag) {
+                Bukkit.getLogger().warning("[PouchIntegration] Error adding item to pouch: " + e.getMessage());
+                e.printStackTrace();
+            }
+            return false;
+        }
     }
 
     /**

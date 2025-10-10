@@ -7,9 +7,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * /conjurer_shop - Opens the Conjurer main menu.
+ * /edit_zoo_keeper - Opens the zoo keeper crafting menu in edit mode.
  */
-public class ConjurerShopCommand implements CommandExecutor {
+public class EditZooKeeperCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -19,11 +19,14 @@ public class ConjurerShopCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
-        if (player.getLevel() < 80) {
-            player.sendMessage(ChatColor.RED + "You must be at least level 80!");
+
+        if (!player.hasPermission("mycraftingplugin.editlayout")) {
+            player.sendMessage(ChatColor.RED + "You don't have permission to edit the zoo keeper layout.");
             return true;
         }
-        ConjurerMainMenu.open(player);
+
+        CategoryMenu.openEditor(player, "zoo_keeper", 0);
+
         return true;
     }
 }

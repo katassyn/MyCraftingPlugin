@@ -17,7 +17,7 @@ import java.util.*;
  */
 public class ImprovedTransactionManager {
 
-    private static final int debuggingFlag = 1; // Set to 0 to disable debug
+    private static final int debuggingFlag = 0; // Set to 0 to disable debug
     private static final ZoneId SERVER_TIMEZONE = ZoneId.systemDefault(); // Or set specific like ZoneId.of("Europe/Warsaw")
 
     /**

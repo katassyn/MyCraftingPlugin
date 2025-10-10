@@ -24,13 +24,19 @@ public class AddRecipeMenu {
         // Wypełniamy interfejs szkłem
         fillWithGlass(inv);
 
+        boolean requiresUnlock = "conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category);
+        if (requiresUnlock) {
+            TemporaryData.setPlayerData(player.getUniqueId(), "required_recipe_category", category.toLowerCase(Locale.ROOT));
+        } else {
+            TemporaryData.removePlayerData(player.getUniqueId(), "required_recipe_category");
+        }
+
         // Jeśli gracz ma zapisany stan GUI, przywróć go
         if (guiStates.containsKey(player.getUniqueId())) {
             inv.setContents(guiStates.get(player.getUniqueId()));
-            if ("conjurer_shop".equalsIgnoreCase(category)) {
+            if (requiresUnlock) {
                 String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
-                String display = (required != null) ? required : "None";
-                inv.setItem(25, createInfoItem("Required Recipe", display));
+                inv.setItem(25, createRequiredRecipeInfoItem(category, required));
             }
         } else {
             // Ustaw pola na wymagane przedmioty (sloty 0-9)
@@ -66,13 +72,13 @@ public class AddRecipeMenu {
                     Material.EMERALD, ChatColor.GREEN + "Save"
             ));
 
-            // Required recipe selector for Conjurer shop
-            if ("conjurer_shop".equalsIgnoreCase(category)) {
+            // Required recipe selector for Conjurer/Scientist
+            if (requiresUnlock) {
                 String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
-                String display = (required != null) ? required : "None";
-                inv.setItem(25, createInfoItem("Required Recipe", display));
+                inv.setItem(25, createRequiredRecipeInfoItem(category, required));
             } else {
                 TemporaryData.removeRequiredRecipe(player.getUniqueId());
+                inv.setItem(25, createMenuItem(Material.PAPER, ChatColor.YELLOW + "No Requirement"));
             }
 
             // Przycisk "Back" (slot 24)
@@ -85,6 +91,34 @@ public class AddRecipeMenu {
         setCategory(player.getUniqueId(), category);
 
         player.openInventory(inv);
+    }
+
+    private static ItemStack createRequiredRecipeInfoItem(String category, String requiredKey) {
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.YELLOW + "Required Recipe");
+            List<String> lore = new ArrayList<>();
+            String display = resolveRequiredRecipeDisplay(category, requiredKey);
+            lore.add(ChatColor.WHITE + display);
+            if (requiredKey != null && !requiredKey.isEmpty()) {
+                lore.add(ChatColor.DARK_GRAY + requiredKey);
+            }
+            meta.setLore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    public static String resolveRequiredRecipeDisplay(String category, String key) {
+        if (key == null || key.isEmpty()) {
+            return "None";
+        }
+        if ("scientist".equalsIgnoreCase(category)) {
+            String title = ScientistResearchUnlockHelper.getRecipeTitle(key);
+            return title == null || title.isEmpty() ? key : title;
+        }
+        return key;
     }
 
     private static ItemStack createMenuItem(Material material, String name) {
@@ -123,7 +157,7 @@ public class AddRecipeMenu {
         ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = glass.getItemMeta();
         if(meta != null) {
-            meta.setDisplayName(" ");
+            meta.setDisplayName("");
             glass.setItemMeta(meta);
         }
 
@@ -158,3 +192,8 @@ public class AddRecipeMenu {
         guiStates.remove(playerUUID);
     }
 }
+
+
+
+
+

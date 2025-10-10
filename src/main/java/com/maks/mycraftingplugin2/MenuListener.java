@@ -62,6 +62,14 @@ public class MenuListener implements Listener {
 
             RunesCrushingMenu.returnItemsToPlayer(player, event.getInventory());
         }
+        // Handle Set Crushing menu closure
+        else if (title.equals("Set Crushing")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Handling Set Crushing menu close for: " + player.getName());
+            }
+
+            SetCrushingMenu.returnItemsToPlayer(player, event.getInventory());
+        }
 
         // Handle other menus that might need item protection
         else if (title.equals("Add New Recipe") || title.equals("Edit Recipe")) {
@@ -181,10 +189,24 @@ public class MenuListener implements Listener {
             handleConjurerMenuClick(player, itemName);
         } else if (title.equals("Edit Conjurer Menu")) {
             handleEditConjurerMenuClick(player, itemName);
+        } else if (title.equals("Dungeon Shop")) {
+            handleDungeonMainMenuClick(player, itemName);
+        } else if (title.equals("Edit Dungeon Shop")) {
+            handleEditDungeonMainMenuClick(player, itemName);
+        } else if (title.startsWith("Mythology Dungeons - Tier Selection")) {
+            handleDungeonTierMenuClick(player, itemName);
+        } else if (title.startsWith("Edit Mythology Dungeons - Tier Selection")) {
+            handleEditDungeonTierMenuClick(player, itemName);
+        } else if (title.startsWith("Category: mythology_t") || title.startsWith("Edit Category: mythology_t")) {
+            handleCategoryMenu(event, player, clickedItem, itemName, title);
         } else if (title.equals("Select Required Recipe")) {
-            handleConjurerRecipeSelectMenu(player, itemName);
+            handleConjurerRecipeSelectMenu(event, player, clickedItem, itemName);
+        } else if (title.equals("Select Scientist Recipe")) {
+            handleScientistRecipeSelectMenu(event, player, clickedItem, itemName);
         } else if (title.equals("Rune Crushing")) {
             handleRuneCrushingMenuClick(event, player, clickedItem, itemName);
+        } else if (title.equals("Set Crushing")) {
+            handleSetCrushingMenuClick(event, player, clickedItem, itemName);
         } else if (title.equals("Emilia Shop")) {
             handleEmiliaMainMenu(player, clickedItem, itemName);
         } else if (title.equals("Edit Emilia Shop")) {
@@ -241,9 +263,11 @@ public class MenuListener implements Listener {
                 || title.equals("Runemaster Menu")
                 || title.equals("Edit Runemaster Menu")
                 || title.equals("Rune Crushing")
+                || title.equals("Set Crushing")
                 || title.equals("Conjurer Menu")
                 || title.equals("Edit Conjurer Menu")
                 || title.equals("Select Required Recipe")
+                || title.equals("Select Scientist Recipe")
                 || title.equals("Emilia Shop")
                 || title.equals("Edit Emilia Shop")
                 || title.equals("Emilia - Shop")
@@ -261,11 +285,15 @@ public class MenuListener implements Listener {
                 || title.equals("Add Zumpe Item")
                 || title.equals("Edit Zumpe Item")
                 || title.equals("Emilia Exchange")
-                || title.equals("Zumpe Exchange");
+                || title.equals("Zumpe Exchange")
+                || title.equals("Dungeon Shop")
+                || title.startsWith("Mythology Dungeons - Tier Selection")
+                || title.equals("Edit Dungeon Shop")
+                || title.startsWith("Edit Mythology Dungeons - Tier Selection");
     }
     // Method to handle "Add New Recipe" and "Edit Recipe" inventories
 // Klasa: MenuListener
-// Fragment kodu z metodą handleAddEditRecipe
+// Fragment kodu z metodÄ… handleAddEditRecipe
     private void handleAddEditRecipe(InventoryClickEvent event, Player player,
                                      ItemStack clickedItem, String itemName, String title) {
         Inventory inv = event.getInventory();
@@ -273,31 +301,31 @@ public class MenuListener implements Listener {
         boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
 
         if (isTopInventory) {
-            // Jeśli gracz kliknął w górną część GUI
-            // 1. Sprawdzamy, czy gracz kliknął placeholder "Required Item X" lub "Result Item".
+            // JeĹ›li gracz kliknÄ…Ĺ‚ w gĂłrnÄ… czÄ™Ĺ›Ä‡ GUI
+            // 1. Sprawdzamy, czy gracz kliknÄ…Ĺ‚ placeholder "Required Item X" lub "Result Item".
             if (clickedItem != null
                     && itemName != null
                     && (itemName.startsWith("Required Item") || itemName.equalsIgnoreCase("Result Item"))) {
 
-                // Dodatkowo sprawdzamy, czy to rodzaj szkła placeholdera
-                // (dla slotu 13 może być LIGHT_BLUE_STAINED_GLASS_PANE,
-                // dla slotów 0–9 GRAY_STAINED_GLASS_PANE, itp.)
+                // Dodatkowo sprawdzamy, czy to rodzaj szkĹ‚a placeholdera
+                // (dla slotu 13 moĹĽe byÄ‡ LIGHT_BLUE_STAINED_GLASS_PANE,
+                // dla slotĂłw 0â€“9 GRAY_STAINED_GLASS_PANE, itp.)
                 Material mat = clickedItem.getType();
                 if (mat == Material.GRAY_STAINED_GLASS_PANE || mat == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
                     // Usuwamy placeholder ze slotu
                     inv.setItem(slot, null);
-                    // Nie pozwalamy przenieść do eq
+                    // Nie pozwalamy przenieĹ›Ä‡ do eq
                     event.setCancelled(true);
                     return;
                 }
             }
 
-            // 2. Jeśli to sloty 0–9 (wymagane przedmioty) lub slot 13 (przedmiot wynikowy),
-            //    pozwalamy wstawić tam dowolny item z eq gracza.
+            // 2. JeĹ›li to sloty 0â€“9 (wymagane przedmioty) lub slot 13 (przedmiot wynikowy),
+            //    pozwalamy wstawiÄ‡ tam dowolny item z eq gracza.
             if ((slot >= 0 && slot <= 9) || slot == 13) {
                 event.setCancelled(false);
             } else {
-                // 3. Obsługa przycisków (success_chance, cost, save, delete, back, itd.)
+                // 3. ObsĹ‚uga przyciskĂłw (success_chance, cost, save, delete, back, itd.)
                 if (itemName == null) return;
 
                 switch (slot) {
@@ -353,10 +381,17 @@ public class MenuListener implements Listener {
                         break;
 
                     case 25:
-                        // Required recipe selector (Conjurer shop)
+                        // Required recipe selector (Conjurer/Scientist)
                         AddRecipeMenu.saveGuiState(player.getUniqueId(), inv.getContents());
                         TemporaryData.setPlayerData(player.getUniqueId(), "edit_menu_title", title);
-                        ConjurerRecipeSelectMenu.open(player);
+                        String currentCategory = AddRecipeMenu.getCategory(player.getUniqueId());
+                        if ("scientist".equalsIgnoreCase(currentCategory)) {
+                            ScientistRecipeSelectMenu.open(player);
+                        } else if ("conjurer_shop".equalsIgnoreCase(currentCategory)) {
+                            ConjurerRecipeSelectMenu.open(player);
+                        } else {
+                            player.sendMessage(ChatColor.YELLOW + "No unlock selector available for this category.");
+                        }
                         break;
 
                     default:
@@ -364,7 +399,7 @@ public class MenuListener implements Listener {
                 }
             }
         } else {
-            // Kliknięto w ekwipunek gracza
+            // KlikniÄ™to w ekwipunek gracza
             event.setCancelled(false);
         }
     }
@@ -430,7 +465,7 @@ public class MenuListener implements Listener {
         }
     }
     // Klasa: MenuListener
-// Fragment kodu z metodą handleCategoryMenu
+// Fragment kodu z metodÄ… handleCategoryMenu
     private void handleCategoryMenu(InventoryClickEvent event, Player player,
                                     ItemStack clickedItem, String itemName, String title) {
         Inventory inv = event.getInventory();
@@ -438,33 +473,33 @@ public class MenuListener implements Listener {
         boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
 
         if (itemName == null) return;
-        // Wydobywamy nazwę kategorii z tytułu "Category: ..." lub "Edit Category: ..."
+        // Wydobywamy nazwÄ™ kategorii z tytuĹ‚u "Category: ..." lub "Edit Category: ..."
         String category = title.contains(": ") ? title.split(": ")[1] : "";
 
-        // Sprawdzamy, czy jesteśmy w trybie edycji
+        // Sprawdzamy, czy jesteĹ›my w trybie edycji
         boolean isEditMode = title.startsWith("Edit Category: ");
 
         if (isTopInventory) {
-            // W trybie edycji pozwalamy przenosić itemy w slotach 0–44 (layout).
+            // W trybie edycji pozwalamy przenosiÄ‡ itemy w slotach 0â€“44 (layout).
             if (isEditMode && slot >= 0 && slot <= 44) {
                 event.setCancelled(false);
             }
 
             if (itemName.equals("Back")) {
-                // Jeżeli to kategoria Alchemii
+                // JeĹĽeli to kategoria Alchemii
                 if (category.equalsIgnoreCase("alchemy_shop")
                         || category.equalsIgnoreCase("tonics")
                         || category.equalsIgnoreCase("potions")
                         || category.equalsIgnoreCase("physic")) {
 
-                    // W zależności, czy to tryb edycji czy normalny
+                    // W zaleĹĽnoĹ›ci, czy to tryb edycji czy normalny
                     if (isEditMode) {
                         AlchemyMainMenu.openEditor(player);
                     } else {
                         AlchemyMainMenu.open(player);
                     }
                 }
-                // Jeżeli to kategoria "q" (np. q1_blood itp.)
+                // JeĹĽeli to kategoria "q" (np. q1_blood itp.)
                 else if (category.startsWith("q")) {
                     String qLevel = category.split("_")[0];
                     if (isEditMode) {
@@ -473,7 +508,7 @@ public class MenuListener implements Listener {
                         DifficultyMenu.open(player, qLevel);
                     }
                 }
-                // Jeżeli to kategoria Jewelera
+                // JeĹĽeli to kategoria Jewelera
                 else if (category.equalsIgnoreCase("jewels_upgrading")) {
                     if (isEditMode) {
                         JewelerMainMenu.openEditor(player);
@@ -481,7 +516,7 @@ public class MenuListener implements Listener {
                         JewelerMainMenu.open(player);
                     }
                 }
-                // Jeżeli to kategoria Gemologa
+                // JeĹĽeli to kategoria Gemologa
                 else if (category.equalsIgnoreCase("gems_crafting")) {
                     if (isEditMode) {
                         GemologistMainMenu.openEditor(player);
@@ -489,7 +524,7 @@ public class MenuListener implements Listener {
                         GemologistMainMenu.open(player);
                     }
                 }
-                // Jeżeli to kategoria Runemastera
+                // JeĹĽeli to kategoria Runemastera
                 else if (category.equalsIgnoreCase("runes_upgrading")) {
                     if (isEditMode) {
                         RunemasterMainMenu.openEditor(player);
@@ -497,7 +532,7 @@ public class MenuListener implements Listener {
                         RunemasterMainMenu.open(player);
                     }
                 }
-                // Jeżeli to kategoria Conjurer Shop
+                // JeĹĽeli to kategoria Conjurer Shop
                 else if (category.equalsIgnoreCase("conjurer_shop")) {
                     if (isEditMode) {
                         ConjurerMainMenu.openEditor(player);
@@ -505,7 +540,7 @@ public class MenuListener implements Listener {
                         ConjurerMainMenu.open(player);
                     }
                 }
-                // Jeżeli to kategoria Mine Shop
+                // JeĹĽeli to kategoria Mine Shop
                 else if (category.equalsIgnoreCase("mine_shop")) {
                     player.closeInventory();
                     boolean hadPerm = player.hasPermission("minesystemplugin.mine");
@@ -518,7 +553,7 @@ public class MenuListener implements Listener {
                         player.removeAttachment(attachment);
                     }
                 }
-                // Jeżeli to kategoria Fisherman Shop
+                // JeĹĽeli to kategoria Fisherman Shop
                 else if (category.equalsIgnoreCase("fisherman_shop")) {
                     player.closeInventory();
                     boolean hadPerm = player.hasPermission("fishing.use");
@@ -530,6 +565,22 @@ public class MenuListener implements Listener {
                         player.performCommand("fishing");
                         player.removeAttachment(attachment);
                     }
+                }
+                // JeĹĽeli to kategoria Grave Shop
+                else if (category.equalsIgnoreCase("grave_shop")) {
+                    player.closeInventory();
+                }
+                // JeĹĽeli to kategoria Dungeon Shop
+                else if (category.equalsIgnoreCase("dungeon_shop")) {
+                    player.closeInventory();
+                }
+                // Zoo Keeper category
+                else if (category.equalsIgnoreCase("zoo_keeper")) {
+                    player.closeInventory();
+                }
+                // JeĹĽeli to kategoria mythology tier (mythology_t1, mythology_t2, etc.)
+                else if (category.startsWith("mythology_t")) {
+                    DungeonTierMenu.open(player, "Mythology Dungeons");
                 }
 
                 // Inne kategorie (keys, lootboxes, itd.)
@@ -568,7 +619,7 @@ public class MenuListener implements Listener {
                 AddRecipeMenu.open(player, category);
             }
             else {
-                // Kliknięto w przedmiot (recepturę)
+                // KlikniÄ™to w przedmiot (recepturÄ™)
                 ItemMeta meta = clickedItem.getItemMeta();
                 if (meta == null || !meta.hasLore()) {
                     player.sendMessage(ChatColor.RED + "Invalid recipe.");
@@ -599,18 +650,21 @@ public class MenuListener implements Listener {
                     return;
                 }
 
-                if (!isEditMode && "conjurer_shop".equalsIgnoreCase(category)) {
+                if (!isEditMode && ("conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category))) {
                     try (Connection conn = Main.getConnection();
                          PreparedStatement ps = conn.prepareStatement("SELECT required_recipe FROM recipes WHERE id=?")) {
                         ps.setInt(1, recipeId);
                         try (ResultSet rs = ps.executeQuery()) {
                             if (rs.next()) {
                                 String required = rs.getString("required_recipe");
-                                if (required != null && !required.isEmpty() &&
-                                        !ConjurerRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
-                                    player.sendMessage(ChatColor.RED + "This recipe is locked. Missing recipe: " + required);
-
-                                    return;
+                                if (required != null && !required.isEmpty()) {
+                                    boolean unlocked = "conjurer_shop".equalsIgnoreCase(category)
+                                            ? ConjurerRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)
+                                            : ScientistResearchUnlockHelper.isUnlocked(player.getUniqueId(), required);
+                                    if (!unlocked) {
+                                        player.sendMessage(ChatColor.RED + "This recipe is locked. Missing recipe: " + required);
+                                        return;
+                                    }
                                 }
                             }
                         }
@@ -619,25 +673,25 @@ public class MenuListener implements Listener {
                     }
                 }
 
-                // W zależności czy edytujemy, czy oglądamy
+                // W zaleĹĽnoĹ›ci czy edytujemy, czy oglÄ…damy
                 if (isEditMode) {
-                    // Otwórz menu edycji receptury
+                    // OtwĂłrz menu edycji receptury
                     EditRecipeMenu.open(player, recipeId);
                 } else {
-                    // Otwórz UnifiedConfirmationMenu
+                    // OtwĂłrz UnifiedConfirmationMenu
                     TemporaryData.setLastCategory(player.getUniqueId(), category);
                     UnifiedConfirmationMenu.open(player, recipeId, UnifiedConfirmationMenu.ShopType.CRAFTING);
                 }
             }
 
-            // Zapisujemy layout tylko w trybie edycji (po drobnej zwłoce)
+            // Zapisujemy layout tylko w trybie edycji (po drobnej zwĹ‚oce)
             if (isEditMode) {
                 Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
                     saveCategoryLayout(inv, category);
                 }, 1L);
             }
         } else {
-            // Kliknięto w ekwipunek gracza
+            // KlikniÄ™to w ekwipunek gracza
             if (isEditMode) {
                 // Zezwalamy na przesuwanie w ekwipunku gracza
                 event.setCancelled(false);
@@ -712,13 +766,17 @@ public class MenuListener implements Listener {
                 if (rs.next()) {
                     String category = rs.getString("category");
                     String required = rs.getString("required_recipe");
-                    if ("conjurer_shop".equalsIgnoreCase(category) &&
-                            !ConjurerRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)) {
-                        player.sendMessage(ChatColor.RED + "You have not unlocked the " + required + " recipe.");
-                        return;
+                    if (("conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category)) && required != null && !required.isEmpty()) {
+                        boolean unlocked = "conjurer_shop".equalsIgnoreCase(category)
+                                ? ConjurerRecipeUnlockManager.hasRecipe(player.getUniqueId(), required)
+                                : ScientistResearchUnlockHelper.isUnlocked(player.getUniqueId(), required);
+                        if (!unlocked) {
+                            player.sendMessage(ChatColor.RED + "You have not unlocked the " + required + " recipe.");
+                            return;
+                        }
                     }
 
-                    // Sprawdź czy gracz ma wymagane przedmioty
+                    // SprawdĹş czy gracz ma wymagane przedmioty
                     boolean hasItems = true;
                     Map<Integer, ItemStack> requiredItems = new HashMap<>();
 
@@ -729,7 +787,7 @@ public class MenuListener implements Listener {
                             if (requiredItem != null) {
                                 requiredItems.put(i, requiredItem);
 
-                                // Użyj PouchIntegrationHelper
+                                // UĹĽyj PouchIntegrationHelper
                                 int totalAmount = PouchIntegrationHelper.getTotalItemAmount(player, requiredItem);
                                 int neededAmount = PouchIntegrationHelper.getActualItemAmount(requiredItem);
 
@@ -755,10 +813,10 @@ public class MenuListener implements Listener {
                         return;
                     }
 
-                    // Sprawdź czy gracz ma wystarczająco pieniędzy
+                    // SprawdĹş czy gracz ma wystarczajÄ…co pieniÄ™dzy
                     double cost = rs.getDouble("cost");
 
-                    // Sprawdź zniżkę Steam Sale
+                    // SprawdĹş zniĹĽkÄ™ Steam Sale
                     double discountMultiplier = 1.0;
                     try {
                         Class<?> jewelAPIClass = Class.forName("com.maks.trinketsplugin.JewelAPI");
@@ -768,7 +826,13 @@ public class MenuListener implements Listener {
                             discountMultiplier = (Double) result;
                         }
                     } catch (Exception e) {
-                        // API niedostępne, używamy domyślnego mnożnika
+                        // API niedostÄ™pne, uĹĽywamy domyĹ›lnego mnoĹĽnika
+                    }
+
+                    // Apply WANDERING_TRADER pet cost reduction
+                    double petCostReduction = getPetCraftingCostReduction(player);
+                    if (petCostReduction > 0) {
+                        discountMultiplier *= (1.0 - petCostReduction / 100.0);
                     }
 
                     double finalCost = cost * discountMultiplier;
@@ -786,15 +850,15 @@ public class MenuListener implements Listener {
                         return;
                     }
 
-                    // Sprawdź czy gracz ma miejsce w ekwipunku
+                    // SprawdĹş czy gracz ma miejsce w ekwipunku
                     if (player.getInventory().firstEmpty() == -1) {
                         player.sendMessage(ChatColor.RED + "Your inventory is full!");
                         return;
                     }
 
-                    // Usuń przedmioty od gracza - ATOMOWO!
+                    // UsuĹ„ przedmioty od gracza - ATOMOWO!
                     boolean allItemsRemoved = true;
-                    List<ItemStack> removedItems = new ArrayList<>(); // Lista usuniętych przedmiotów dla rollbacku
+                    List<ItemStack> removedItems = new ArrayList<>(); // Lista usuniÄ™tych przedmiotĂłw dla rollbacku
 
                     // Group required items by base name and calculate total units needed
                     Map<String, Integer> totalUnitsNeeded = new HashMap<>();
@@ -868,7 +932,7 @@ public class MenuListener implements Listener {
                                     (result.errorMessage != null ? " - " + result.errorMessage : ""));
                             }
 
-                            // Przywróć wcześniej usunięte przedmioty
+                            // PrzywrĂłÄ‡ wczeĹ›niej usuniÄ™te przedmioty
                             for (ItemStack removedItem : removedItems) {
                                 player.getInventory().addItem(removedItem.clone());
 
@@ -882,7 +946,7 @@ public class MenuListener implements Listener {
                             break;
                         }
 
-                        // Zapisz usunięty przedmiot dla ewentualnego rollbacku
+                        // Zapisz usuniÄ™ty przedmiot dla ewentualnego rollbacku
                         removedItems.add(consolidatedItem.clone());
 
                         if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
@@ -897,16 +961,12 @@ public class MenuListener implements Listener {
                         return;
                     }
 
-                    // Pobierz pieniądze
+                    // Pobierz pieniÄ…dze (juĹĽ z zastosowanÄ… zniĹĽkÄ…)
                     if (finalCost > 0) {
                         Main.getEconomy().withdrawPlayer(player, finalCost);
-                        if (discountMultiplier < 1.0) {
-                            player.sendMessage(ChatColor.GOLD + "Your Merchant Jewel gave you a " + 
-                                    (int)((1.0 - discountMultiplier) * 100) + "% discount!");
-                        }
                     }
 
-                    // Oblicz szansę na sukces
+                    // Oblicz szansÄ™ na sukces
                     double successChance = rs.getDouble("success_chance");
                     if (Math.random() * 100 <= successChance) {
                         // Sukces - daj przedmiot graczowi
@@ -925,8 +985,35 @@ public class MenuListener implements Listener {
                     } else {
                         player.sendMessage(ChatColor.RED + "Crafting failed.");
 
+                        // Check ILLUSIONER pet refund chance
+                        double petRefundChance = getPetCraftingRefundChance(player);
+                        boolean shouldRefund = petRefundChance > 0 && Math.random() * 100 < petRefundChance;
+
+                        if (shouldRefund) {
+                            player.sendMessage(ChatColor.LIGHT_PURPLE + "âś¦ ILLUSIONER PET EFFECT: Ingredient refunded!");
+                        }
+
+                        // Return the first item (required_item_1) to player on craft failure
+                        // Always return if pet effect triggers, otherwise normal behavior
+                        String firstItemData = rs.getString("required_item_1");
+                        if (firstItemData != null && shouldRefund) {
+                            ItemStack firstItem = ItemStackSerializer.deserialize(firstItemData);
+                            if (firstItem != null) {
+                                player.getInventory().addItem(firstItem);
+                                player.sendMessage(ChatColor.YELLOW + "Returned: " +
+                                    PouchIntegrationHelper.getItemName(firstItem) + " x" +
+                                    PouchIntegrationHelper.getActualItemAmount(firstItem));
+
+                                if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                                    Bukkit.getLogger().info("[Crafting] Pet effect refunded first item on failure: " +
+                                        PouchIntegrationHelper.getItemName(firstItem) + " x" +
+                                        PouchIntegrationHelper.getActualItemAmount(firstItem));
+                                }
+                            }
+                        }
+
                         if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
-                            Bukkit.getLogger().info("[Crafting] Failed - success chance was: " + successChance + "%");
+                            Bukkit.getLogger().info("[Crafting] Failed - success chance was: " + successChance + "%, pet refund chance: " + petRefundChance + "%");
                         }
                     }
                 } else {
@@ -1098,9 +1185,9 @@ public class MenuListener implements Listener {
             // Koszt
             ps.setDouble(15, TemporaryData.getCost(player.getUniqueId()));
 
-            // Required recipe (only for conjurer shop)
+            // Required recipe (for conjurer_shop or scientist)
             String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
-            if (!"conjurer_shop".equalsIgnoreCase(category)) {
+            if (!("conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category))) {
                 required = null;
             }
             ps.setString(16, required);
@@ -1108,13 +1195,14 @@ public class MenuListener implements Listener {
             ps.executeUpdate();
             player.sendMessage(ChatColor.GREEN + "Recipe has been saved.");
 
-            // Wyczyść dane tymczasowe
+            // WyczyĹ›Ä‡ dane tymczasowe
             TemporaryData.removeSuccessChance(player.getUniqueId());
             TemporaryData.removeCost(player.getUniqueId());
             TemporaryData.removeRequiredRecipe(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "required_recipe_category");
             AddRecipeMenu.removeGuiState(player.getUniqueId());
 
-            // Zamiast zamykać GUI, otwórz z powrotem menu kategorii
+            // Zamiast zamykaÄ‡ GUI, otwĂłrz z powrotem menu kategorii
             int page = TemporaryData.getPage(player.getUniqueId(), category);
             CategoryMenu.openEditor(player, category, page);
 
@@ -1164,7 +1252,7 @@ public class MenuListener implements Listener {
 
             String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
             String category = TemporaryData.getLastCategory(player.getUniqueId());
-            if (!"conjurer_shop".equalsIgnoreCase(category)) {
+            if (!("conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category))) {
                 required = null;
             }
             ps.setString(14, required);
@@ -1177,14 +1265,14 @@ public class MenuListener implements Listener {
                 player.sendMessage(ChatColor.RED + "No recipe was updated. The recipe might have been deleted.");
             }
 
-            // Wyczyść dane tymczasowe
+            // WyczyĹ›Ä‡ dane tymczasowe
             TemporaryData.removeSuccessChance(player.getUniqueId());
             TemporaryData.removeCost(player.getUniqueId());
             TemporaryData.removeRequiredRecipe(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "required_recipe_category");
             AddRecipeMenu.removeGuiState(player.getUniqueId());
 
             // Instead of player.closeInventory();
-            String category = TemporaryData.getLastCategory(player.getUniqueId());
             int page = TemporaryData.getPage(player.getUniqueId(), category);
             CategoryMenu.openEditor(player, category, page);
 
@@ -1214,7 +1302,7 @@ public class MenuListener implements Listener {
                 player.sendMessage(ChatColor.RED + "No recipe was deleted. The recipe might have already been removed.");
             }
 
-            // Wyczyść dane tymczasowe
+            // WyczyĹ›Ä‡ dane tymczasowe
             TemporaryData.removeSuccessChance(player.getUniqueId());
             TemporaryData.removeCost(player.getUniqueId());
             AddRecipeMenu.removeGuiState(player.getUniqueId());
@@ -1244,7 +1332,7 @@ public class MenuListener implements Listener {
                     recipeIdMap.put(rs.getString("result_item"), rs.getInt("id"));
                 }
 
-                // Następnie aktualizuj pozycje
+                // NastÄ™pnie aktualizuj pozycje
                 try (PreparedStatement updatePs = conn.prepareStatement("UPDATE recipes SET slot = ? WHERE id = ?")) {
                     for (int i = 0; i < 45; i++) {
                         ItemStack item = inv.getItem(i);
@@ -1268,7 +1356,7 @@ public class MenuListener implements Listener {
     private void handleAlchemyMenuClick(Player player, String itemName) {
         switch (itemName) {
             case "Alchemy Shop":
-                // Otwórz CategoryMenu z kategorią "alchemy_shop"
+                // OtwĂłrz CategoryMenu z kategoriÄ… "alchemy_shop"
                 CategoryMenu.open(player, "alchemy_shop", 0);
                 break;
             case "Tonics Crafting":
@@ -1482,29 +1570,52 @@ public class MenuListener implements Listener {
         }
     }
 
-    private void handleConjurerRecipeSelectMenu(Player player, String itemName) {
-        if (itemName == null) return;
-
+    private void handleConjurerRecipeSelectMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null || clickedItem == null || clickedItem.getType() == Material.AIR) {
+            return;
+        }
+        event.setCancelled(true);
         String title = (String) TemporaryData.getPlayerData(player.getUniqueId(), "edit_menu_title");
         if (itemName.equals("Back")) {
-            if ("Add New Recipe".equals(title)) {
-                AddRecipeMenu.open(player, AddRecipeMenu.getCategory(player.getUniqueId()));
-            } else if ("Edit Recipe".equals(title)) {
-                EditRecipeMenu.open(player, EditRecipeMenu.getRecipeId(player.getUniqueId()));
-            } else {
-                player.closeInventory();
-            }
-        } else {
-            TemporaryData.setRequiredRecipe(player.getUniqueId(), itemName);
-            if ("Add New Recipe".equals(title)) {
-                AddRecipeMenu.open(player, AddRecipeMenu.getCategory(player.getUniqueId()));
-            } else if ("Edit Recipe".equals(title)) {
-                EditRecipeMenu.open(player, EditRecipeMenu.getRecipeId(player.getUniqueId()));
-            } else {
-                player.closeInventory();
-            }
+            reopenRecipeMenu(player, title);
+            return;
         }
+        TemporaryData.setRequiredRecipe(player.getUniqueId(), itemName);
+        TemporaryData.setPlayerData(player.getUniqueId(), "required_recipe_category", "conjurer_shop");
+        reopenRecipeMenu(player, title);
+    }
+
+    private void handleScientistRecipeSelectMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (clickedItem == null || clickedItem.getType() == Material.AIR) {
+            return;
+        }
+        event.setCancelled(true);
+        String title = (String) TemporaryData.getPlayerData(player.getUniqueId(), "edit_menu_title");
+        if (itemName != null && ChatColor.stripColor(itemName).equalsIgnoreCase("Back")) {
+            reopenRecipeMenu(player, title);
+            return;
+        }
+        String key = ScientistRecipeSelectMenu.readKey(clickedItem);
+        if (key == null || key.isEmpty()) {
+            key = itemName != null ? ChatColor.stripColor(itemName) : null;
+        }
+        if (key == null || key.isEmpty()) {
+            return;
+        }
+        TemporaryData.setRequiredRecipe(player.getUniqueId(), key);
+        TemporaryData.setPlayerData(player.getUniqueId(), "required_recipe_category", "scientist");
+        reopenRecipeMenu(player, title);
+    }
+
+    private void reopenRecipeMenu(Player player, String title) {
         TemporaryData.removePlayerData(player.getUniqueId(), "edit_menu_title");
+        if ("Add New Recipe".equals(title)) {
+            AddRecipeMenu.open(player, AddRecipeMenu.getCategory(player.getUniqueId()));
+        } else if ("Edit Recipe".equals(title)) {
+            EditRecipeMenu.open(player, EditRecipeMenu.getRecipeId(player.getUniqueId()));
+        } else {
+            player.closeInventory();
+        }
     }
 
     private void handleJewelsCrushingMenuClick(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
@@ -1753,6 +1864,72 @@ public class MenuListener implements Listener {
 
         if (slot == 22 && itemName != null && itemName.equals("Confirm Crushing")) {
             RunesCrushingMenu.processRunes(player, inv);
+            event.setCancelled(true);
+            return;
+        }
+
+        event.setCancelled(true);
+    }
+
+    private void handleSetCrushingMenuClick(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        int slot = event.getRawSlot();
+        Inventory inv = event.getInventory();
+
+        if (event.getClickedInventory() == null) {
+            return;
+        }
+
+        if (slot < 18 && event.getClickedInventory().equals(event.getView().getTopInventory())) {
+            if (event.getAction().name().contains("PLACE")) {
+                ItemStack cursor = event.getCursor();
+                if (cursor != null && cursor.getType() != Material.AIR) {
+                    if (!SetCrushingMenu.isCrushableSetItem(cursor)) {
+                        player.sendMessage(ChatColor.RED + "You can only place set items or imprinted items here!");
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            } else if (event.getAction().name().contains("SHIFT") &&
+                    event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+                ItemStack currentItem = event.getCurrentItem();
+                if (currentItem != null && currentItem.getType() != Material.AIR) {
+                    if (!SetCrushingMenu.isCrushableSetItem(currentItem)) {
+                        player.sendMessage(ChatColor.RED + "You can only place set items or imprinted items in the crushing menu!");
+                        event.setCancelled(true);
+                        return;
+                    }
+
+                    boolean placed = false;
+                    for (int i = 0; i < 18; i++) {
+                        if (inv.getItem(i) == null || inv.getItem(i).getType() == Material.AIR) {
+                            ItemStack toPlace = currentItem.clone();
+                            inv.setItem(i, toPlace);
+                            currentItem.setAmount(0);
+                            placed = true;
+                            break;
+                        }
+                    }
+
+                    if (!placed) {
+                        player.sendMessage(ChatColor.RED + "No space available in the crushing area!");
+                    }
+
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+
+            event.setCancelled(false);
+            return;
+        }
+
+        if (event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+            event.setCancelled(false);
+            return;
+        }
+
+        if (slot == 22 && itemName != null && itemName.equals("Confirm Crushing")) {
+            SetCrushingMenu.processSets(player, inv);
             event.setCancelled(true);
             return;
         }
@@ -2698,4 +2875,133 @@ public class MenuListener implements Listener {
             UnifiedConfirmationMenu.refresh(player, itemId, UnifiedConfirmationMenu.ShopType.ZUMPE);
         }
     }
+
+    private void handleDungeonMainMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Mythology Dungeons":
+                DungeonTierMenu.open(player, "Mythology Dungeons");
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleDungeonTierMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Tier 1":
+                CategoryMenu.open(player, "mythology_t1", 0);
+                break;
+            case "Tier 2":
+                CategoryMenu.open(player, "mythology_t2", 0);
+                break;
+            case "Tier 3":
+                CategoryMenu.open(player, "mythology_t3", 0);
+                break;
+            case "Tier 4":
+                CategoryMenu.open(player, "mythology_t4", 0);
+                break;
+            case "Tier 5":
+                CategoryMenu.open(player, "mythology_t5", 0);
+                break;
+            case "Back":
+                DungeonMainMenu.open(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEditDungeonMainMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Mythology Dungeons":
+                DungeonTierMenu.openEditor(player, "Mythology Dungeons");
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEditDungeonTierMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Tier 1":
+                CategoryMenu.openEditor(player, "mythology_t1", 0);
+                break;
+            case "Tier 2":
+                CategoryMenu.openEditor(player, "mythology_t2", 0);
+                break;
+            case "Tier 3":
+                CategoryMenu.openEditor(player, "mythology_t3", 0);
+                break;
+            case "Tier 4":
+                CategoryMenu.openEditor(player, "mythology_t4", 0);
+                break;
+            case "Tier 5":
+                CategoryMenu.openEditor(player, "mythology_t5", 0);
+                break;
+            case "Back":
+                DungeonMainMenu.openEditor(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Get WANDERING_TRADER pet crafting cost reduction percentage
+     */
+    private double getPetCraftingCostReduction(Player player) {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            return 0.0;
+        }
+
+        String placeholder = setPlaceholders(player, "%petplugin_crafting_cost_reduction%");
+        try {
+            return Double.parseDouble(placeholder);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * Get ILLUSIONER pet crafting refund chance percentage
+     */
+    private double getPetCraftingRefundChance(Player player) {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            return 0.0;
+        }
+
+        String placeholder = setPlaceholders(player, "%petplugin_crafting_refund_chance%");
+        try {
+            return Double.parseDouble(placeholder);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * Use reflection to call PlaceholderAPI.setPlaceholders without direct import
+     */
+    private String setPlaceholders(Player player, String text) {
+        try {
+            Class<?> placeholderAPI = Class.forName("me.clip.placeholderapi.PlaceholderAPI");
+            return (String) placeholderAPI.getMethod("setPlaceholders", org.bukkit.entity.Player.class, String.class)
+                    .invoke(null, player, text);
+        } catch (Exception e) {
+            return text; // Return original text if PlaceholderAPI is not available
+        }
+    }
 }
+
+
+
+
+
+

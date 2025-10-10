@@ -8,29 +8,21 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.List;
-
-/**
- * Menu for selecting which Conjurer recipe is required for a crafting recipe.
- */
-public class ConjurerRecipeSelectMenu {
+public class DungeonMainMenu {
 
     public static void open(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Select Required Recipe");
+        Inventory inv = Bukkit.createInventory(null, 27, "Dungeon Shop");
 
-        List<String> recipes = ConjurerRecipeUnlockManager.getAllRecipes();
-        int index = 0;
-        for (String recipe : recipes) {
-            ItemStack item = new ItemStack(Material.PAPER);
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(ChatColor.YELLOW + recipe);
-                item.setItemMeta(meta);
-            }
-            inv.setItem(index++, item);
-        }
+        inv.setItem(13, createMenuItem(Material.NETHER_STAR, ChatColor.DARK_PURPLE + "Mythology Dungeons"));
 
-        inv.setItem(26, createMenuItem(Material.ARROW, ChatColor.YELLOW + "Back"));
+        fillWithGlass(inv);
+        player.openInventory(inv);
+    }
+
+    public static void openEditor(Player player) {
+        Inventory inv = Bukkit.createInventory(null, 27, "Edit Dungeon Shop");
+
+        inv.setItem(13, createMenuItem(Material.NETHER_STAR, ChatColor.DARK_PURPLE + "Mythology Dungeons"));
 
         fillWithGlass(inv);
         player.openInventory(inv);
@@ -50,7 +42,7 @@ public class ConjurerRecipeSelectMenu {
         ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = glass.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("");
+            meta.setDisplayName(" ");
             glass.setItemMeta(meta);
         }
         for (int i = 0; i < inv.getSize(); i++) {

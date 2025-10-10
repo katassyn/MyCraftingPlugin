@@ -9,9 +9,139 @@ database:
 debug: 0
 
 conjurer:
-  mobs:
-    # MythicMob IDs (case-insensitive, comma optional)
-    - obstinate_toltec_warrior,
-    - obstinate_toltec_hunter,
-    - obstinate_toltec_shaman,
+  mobs: |
+    # newline-separated MythicMob IDs (case-insensitive)
+    flamecult_servant_blood
+    flamecult_archer_blood
+    flamecult_worshipper_blood
+    perral_world_dragonknight_blood
+    raazghul_the_corruptor_blood
+    grimmag_blood
+    gremlin_marauder_blood
+    death_witch_blood
+    poisonous_spider_blood
+    corrupted_root_creature_blood
+    xerib_the_hunchback_blood
+    archus_the_mad_blood
+    arachna_scourge_of_duria_blood
+    cursed_farmer_blood
+    cursed_troll_blood
+    cursed_archer_blood
+    parallel_world_evil_miller_blood
+    slain_assassin_blood
+    slain_warrior_blood
+    slain_archer_blood
+    the_bloody_arrow_blood
+    undead_parallel_world_king_heredur_blood
+    sanguine_clan_raging_guardian_blood
+    raging_hunting_hound_blood
+    sanguine_clan_raging_snooper_blood
+    sanguine_clan_raging_hunter_blood
+    parallel_world_ancient_stag_blood
+    eternal_satyr_warrior_blood
+    eternal_root_creature_blood
+    eternal_hunter_blood
+    eternal_hunting_hound_blood
+    ulgar_the_master_butcher_phase1_blood
+    ulgar_the_master_butcher_phase2_blood
+    ulgar_the_master_butcher_phase3_blood
+    bearach_champion_of_wilds_blood
+    lightning_wolf_blood
+    furious_maggot_blood
+    furious_flagrancy_blood
+    furious_andermagic_blood
+    parallel_world_old_jabbax_shaman_blood
+    andermagic_guardian_blood
+    living_andermagic_blood
+    wailing_andermagic_ghost_blood
+    andermagic_scoropitl_blood
+    wandering_experiment_blood
+    khalys_leader_of_cultists_blood
+    khalys_clone_blood
+    fallen_warrior_blood
+    fallen_archer_blood
+    death_knight_blood
+    mortis_death_knight_blood
+    elite_skeleton_archer_blood
+    death_archer_blood
+    raging_soul_blood
+    elite_skeleton_warrior_blood
+    murot_high_priest_blood
+    skeledragon_phase1_blood
+    skeledragon_phase2_blood
+    mortis_phase3_blood
+    bone_warder_blood
+    b1000_combat_mechanoid_blood
+    thundering_cyclops_blood
+    dark_sentinel_blood
+    iron_creeper_gate_guard_blood
+    wild_razorclaw_blood
+    flamescale_defender_blood
+    fireclaw_mercenary_blood
+    angry_flamespawn_blood
+    commander_embersword_blood
+    herald_of_anderworld_blood
+    electrified_ferocity_blood
+    charged_drone_blood
+    big_heap_of_ice_blood
+    bloodthirsty_frostwolf_blood
+    shocking_forocity_blood
+    pale_pillager_blood
+    simple_troll_blood
+    frost_magician_blood
+    frost_bringer_blood
+    pale_enforcer_blood
+    sigrismarr_priest_of_fjalnir_blood
+    agile_satyr_warrior_blood
+    perfidious_satyr_archer_blood
+    cohort_swordsman_blood
+    stone_golem_blood
+    asterion_blood
+    jabbax_blood
+    zorlobb_warrior_blood
+    gorgon_acolyte_blood
+    minotaur_blood
+    ebicarus_blood
+    medusa_blood
+    snake_minion_blood
+    scheming_gorgon_blood
+    poisonous_jitterjelly_blood
+    anderworld_jitterjelly_blood
+    combat_ready_zorlobb_blood
+    melas_the_swift_footed_blood
+    anderworld_jabbax_blood
+    patrolling_jabbax_blood
+    armed_khaross_blood
+    mordacious_khaross_blood
+    akheilos_blood
+    parallel_world_gorga_blood
   recipe_drop_chance: 0.001
+
+# Imprinting system configuration
+imprinting:
+  costs:
+    t1:
+      essence_crystal: 1
+      power_crystal: 0
+      primordial_soul_crystal: 0
+      vault_money: 100
+    t2:
+      essence_crystal: 2
+      power_crystal: 1
+      primordial_soul_crystal: 0
+      vault_money: 250
+    t3:
+      essence_crystal: 3
+      power_crystal: 2
+      primordial_soul_crystal: 0
+      vault_money: 500
+    t4:
+      essence_crystal: 5
+      power_crystal: 3
+      primordial_soul_crystal: 1
+      vault_money: 1000
+    t5:
+      essence_crystal: 8
+      power_crystal: 5
+      primordial_soul_crystal: 2
+      vault_money: 2000

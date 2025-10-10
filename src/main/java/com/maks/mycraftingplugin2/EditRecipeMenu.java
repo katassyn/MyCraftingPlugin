@@ -24,13 +24,21 @@ public class EditRecipeMenu {
         // Wypełniamy interfejs szkłem
         fillWithGlass(inv);
 
+        boolean requiresUnlock = false;
+
         // Przywróć zapisany stan GUI jeśli istnieje
         ItemStack[] saved = AddRecipeMenu.getGuiState(player.getUniqueId());
         if (saved != null) {
             inv.setContents(saved);
             String required = TemporaryData.getRequiredRecipe(player.getUniqueId());
-            if (required != null) {
-                inv.setItem(25, createInfoItem("Required Recipe", required));
+            String category = (String) TemporaryData.getPlayerData(player.getUniqueId(), "required_recipe_category");
+            if (category == null || category.isEmpty()) {
+                category = TemporaryData.getLastCategory(player.getUniqueId());
+            }
+            requiresUnlock = "conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category);
+            if (requiresUnlock) {
+                TemporaryData.setPlayerData(player.getUniqueId(), "required_recipe_category", category.toLowerCase(Locale.ROOT));
+                inv.setItem(25, createRequiredRecipeInfoItem(category, required));
             }
         } else {
             // Pobierz dane receptury z bazy danych
@@ -83,17 +91,21 @@ public class EditRecipeMenu {
                         ));
 
                         String category = rs.getString("category");
-                        if ("conjurer_shop".equalsIgnoreCase(category)) {
+                        requiresUnlock = "conjurer_shop".equalsIgnoreCase(category) || "scientist".equalsIgnoreCase(category);
+                        if (requiresUnlock) {
                             String required = rs.getString("required_recipe");
                             TemporaryData.setRequiredRecipe(player.getUniqueId(), required);
-                            String display = (required != null) ? required : "None";
-                            inv.setItem(25, createInfoItem("Required Recipe", display));
+                            TemporaryData.setPlayerData(player.getUniqueId(), "required_recipe_category", category.toLowerCase(Locale.ROOT));
+                            inv.setItem(25, createRequiredRecipeInfoItem(category, required));
                         } else {
                             TemporaryData.removeRequiredRecipe(player.getUniqueId());
+                            TemporaryData.removePlayerData(player.getUniqueId(), "required_recipe_category");
+                            inv.setItem(25, createMenuItem(Material.PAPER, ChatColor.YELLOW + "No Requirement"));
                         }
                     }
                 }
             } catch (SQLException e) {
+                TemporaryData.removePlayerData(player.getUniqueId(), "required_recipe_category");
                 e.printStackTrace();
                 player.sendMessage(ChatColor.RED + "Error loading recipe data!");
             }
@@ -117,6 +129,23 @@ public class EditRecipeMenu {
         return item;
     }
 
+    private static ItemStack createRequiredRecipeInfoItem(String category, String requiredKey) {
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.YELLOW + "Required Recipe");
+            List<String> lore = new ArrayList<>();
+            String display = AddRecipeMenu.resolveRequiredRecipeDisplay(category, requiredKey);
+            lore.add(ChatColor.WHITE + display);
+            if (requiredKey != null && !requiredKey.isEmpty()) {
+                lore.add(ChatColor.DARK_GRAY + requiredKey);
+            }
+            meta.setLore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
     private static ItemStack createInfoItem(String name, String value) {
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta meta = item.getItemMeta();
@@ -132,7 +161,7 @@ public class EditRecipeMenu {
         ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = glass.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(" ");
+            meta.setDisplayName("");
             glass.setItemMeta(meta);
         }
 
@@ -167,3 +196,6 @@ public class EditRecipeMenu {
         }
     }
 }
+
+
+

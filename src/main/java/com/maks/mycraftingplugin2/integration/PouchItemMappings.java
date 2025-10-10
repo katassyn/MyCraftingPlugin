@@ -193,6 +193,38 @@ public class PouchItemMappings {
         itemMappings.put("[ I ] Bee Larva", "larva_I");
         itemMappings.put("[ II ] Bee Larva", "larva_II");
         itemMappings.put("[ III ] Bee Larva", "larva_III");
+        // Updated MythicMobs display names (aliases for API lookups)
+        itemMappings.put("[ I ] Grimmor`s Cindered Cape", "grimmag_frag_I");
+        itemMappings.put("[ II ] Grimmor`s Cindered Cape", "grimmag_frag_II");
+        itemMappings.put("[ III ] Grimmor`s Cindered Cape", "grimmag_frag_III");
+        itemMappings.put("[ I ] Araksha`s Venom Husk", "arachna_frag_I");
+        itemMappings.put("[ II ] Araksha`s Venom Husk", "arachna_frag_II");
+        itemMappings.put("[ III ] Araksha`s Venom Husk", "arachna_frag_III");
+        itemMappings.put("[ I ] Heredorn`s Glacial Armor", "heredur_frag_I");
+        itemMappings.put("[ II ] Heredorn`s Glacial Armor", "heredur_frag_II");
+        itemMappings.put("[ III ] Heredorn`s Glacial Armor", "heredur_frag_III");
+        itemMappings.put("[ I ] Bearok Honey Hide", "bearach_frag_I");
+        itemMappings.put("[ II ] Bearok Honey Hide", "bearach_frag_II");
+        itemMappings.put("[ III ] Bearok Honey Hide", "bearach_frag_III");
+        itemMappings.put("[ I ] Kalith`s Ritual Robe", "khalys_frag_I");
+        itemMappings.put("[ II ] Kalith`s Ritual Robe", "khalys_frag_II");
+        itemMappings.put("[ III ] Kalith`s Ritual Robe", "khalys_frag_III");
+        itemMappings.put("[ I ] Harbinger`s Dragon Skin", "heralds_frag_I");
+        itemMappings.put("[ II ] Harbinger`s Dragon Skin", "heralds_frag_II");
+        itemMappings.put("[ III ] Harbinger`s Dragon Skin", "heralds_frag_III");
+        itemMappings.put("[ I ] Sigrosmar`s Eternal Ice", "sigrismar_frag_I");
+        itemMappings.put("[ II ] Sigrosmar`s Eternal Ice", "sigrismar_frag_II");
+        itemMappings.put("[ III ] Sigrosmar`s Eternal Ice", "sigrismar_frag_III");
+        itemMappings.put("[ I ] M`Edara Stone Scales", "medusa_frag_I");
+        itemMappings.put("[ II ] M`Edara Stone Scales", "medusa_frag_II");
+        itemMappings.put("[ III ] M`Edara Stone Scales", "medusa_frag_III");
+        itemMappings.put("[ I ] Gorgra`s Broken Tooth", "gorga_frag_I");
+        itemMappings.put("[ II ] Gorgra`s Broken Tooth", "gorga_frag_II");
+        itemMappings.put("[ III ] Gorgra`s Broken Tooth", "gorga_frag_III");
+        itemMappings.put("[ I ] Mortrix Sacrificial Bones", "mortis_frag_I");
+        itemMappings.put("[ II ] Mortrix Sacrificial Bones", "mortis_frag_II");
+        itemMappings.put("[ III ] Mortrix Sacrificial Bones", "mortis_frag_III");
+        itemMappings.put("Anderium", "andermant");
         // CURRENCY category items
         itemMappings.put("DrakenMelon", "draken");
         itemMappings.put("Glided Sunflower", "clover");
@@ -202,6 +234,11 @@ public class PouchItemMappings {
         itemMappings.put("Shiny Dust", "shiny_dust");
         itemMappings.put("Rune Dust", "rune_dust");
         itemMappings.put("Crystal", "crystal");
+        
+        // Imprinting crystals
+        itemMappings.put("Essence Crystal", "essence_crystal");
+        itemMappings.put("Power Crystal", "power_crystal");
+        itemMappings.put("Primordial Soul Crystal", "primordial_soul_crystal");
     }
 
     /**
@@ -251,3 +288,4 @@ public class PouchItemMappings {
         return new HashMap<>(itemMappings);
     }
 }
+

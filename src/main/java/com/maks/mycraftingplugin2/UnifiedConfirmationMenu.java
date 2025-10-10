@@ -62,7 +62,7 @@ public class UnifiedConfirmationMenu {
         }
 
         // Set action button (slot 40) - unified naming
-        ItemStack actionButton = createActionButton(itemId, shopType);
+        ItemStack actionButton = createActionButton(itemId, shopType, player);
         if (actionButton != null) {
             inv.setItem(40, actionButton);
         }
@@ -160,7 +160,7 @@ public class UnifiedConfirmationMenu {
         return null;
     }
 
-    private static ItemStack createActionButton(int itemId, ShopType shopType) {
+    private static ItemStack createActionButton(int itemId, ShopType shopType, Player player) {
         String query = "";
 
         switch (shopType) {
@@ -179,7 +179,44 @@ public class UnifiedConfirmationMenu {
             ps.setInt(1, itemId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    double cost = rs.getDouble("cost");
+                    double originalCost = rs.getDouble("cost");
+                    double finalCost = originalCost;
+                    double discountMultiplier = 1.0;
+                    boolean hasSteamSaleDiscount = false;
+
+                    // Check for Steam Sale discount only for CRAFTING
+                    if (shopType == ShopType.CRAFTING) {
+                        try {
+                            Class<?> jewelAPIClass = Class.forName("com.maks.trinketsplugin.JewelAPI");
+                            java.lang.reflect.Method getCraftingDiscountMethod = jewelAPIClass.getMethod("getCraftingDiscount", Player.class);
+                            Object result = getCraftingDiscountMethod.invoke(null, player);
+                            if (result instanceof Double) {
+                                discountMultiplier = (Double) result;
+                                if (discountMultiplier < 1.0) {
+                                    hasSteamSaleDiscount = true;
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Steam Sale API not available, use original cost
+                        }
+
+                        // Apply pet discount if available
+                        try {
+                            java.lang.reflect.Method getPetCraftingCostReduction = MenuListener.class.getDeclaredMethod("getPetCraftingCostReduction", Player.class);
+                            getPetCraftingCostReduction.setAccessible(true);
+                            Object petResult = getPetCraftingCostReduction.invoke(null, player);
+                            if (petResult instanceof Double) {
+                                double petReduction = (Double) petResult;
+                                if (petReduction > 0) {
+                                    discountMultiplier *= (1.0 - petReduction / 100.0);
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Pet API not available
+                        }
+
+                        finalCost = originalCost * discountMultiplier;
+                    }
 
                     ItemStack actionButton = new ItemStack(Material.EMERALD);
                     ItemMeta meta = actionButton.getItemMeta();
@@ -190,9 +227,16 @@ public class UnifiedConfirmationMenu {
 
                         List<String> lore = new ArrayList<>();
 
-                        // Cost (all systems have this)
-                        if (cost > 0) {
-                            lore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GOLD + formatCost(cost));
+                        // Cost display with discount information
+                        if (originalCost > 0) {
+                            if (hasSteamSaleDiscount && shopType == ShopType.CRAFTING) {
+                                // Show both original and discounted price
+                                lore.add(ChatColor.YELLOW + "Original Cost: " + ChatColor.GRAY + ChatColor.STRIKETHROUGH + formatCost(originalCost));
+                                lore.add(ChatColor.YELLOW + "Discounted Cost: " + ChatColor.GOLD + formatCost(finalCost));
+                                lore.add(ChatColor.GREEN + "✦ Steam Sale Discount: " + (int)((1.0 - discountMultiplier) * 100) + "%");
+                            } else {
+                                lore.add(ChatColor.YELLOW + "Cost: " + ChatColor.GOLD + formatCost(finalCost));
+                            }
                         }
 
                         // System-specific info
@@ -202,31 +246,20 @@ public class UnifiedConfirmationMenu {
                         } else {
                             int dailyLimit = rs.getInt("daily_limit");
                             if (dailyLimit > 0) {
-                                // Pobierz aktualny stan użycia
+                                // Get current usage for the specific player
                                 int usedToday = 0;
-                                Player viewingPlayer = null;
-
-                                // Znajdź gracza który ogląda to menu
-                                for (Player p : Bukkit.getOnlinePlayers()) {
-                                    if (p.getOpenInventory() != null && 
-                                        p.getOpenInventory().getTitle().equals(shopType.menuTitle)) {
-                                        viewingPlayer = p;
-                                        break;
-                                    }
-                                }
-
-                                if (viewingPlayer != null) {
+                                if (player != null) {
                                     if (shopType == ShopType.EMILIA) {
                                         usedToday = EmiliaTransactionManager.getTransactionCount(
-                                                viewingPlayer.getUniqueId(), itemId);
+                                                player.getUniqueId(), itemId);
                                     } else {
                                         usedToday = ZumpeTransactionManager.getTransactionCount(
-                                                viewingPlayer.getUniqueId(), itemId);
+                                                player.getUniqueId(), itemId);
                                     }
                                 }
 
                                 int remainingUses = dailyLimit - usedToday;
-                                lore.add(ChatColor.YELLOW + "Daily Limit: " + ChatColor.GOLD + 
+                                lore.add(ChatColor.YELLOW + "Daily Limit: " + ChatColor.GOLD +
                                         remainingUses + "/" + dailyLimit);
                             }
                         }
@@ -295,7 +328,7 @@ public class UnifiedConfirmationMenu {
         }
 
         // Refresh the action button
-        ItemStack newButton = createActionButton(itemId, shopType);
+        ItemStack newButton = createActionButton(itemId, shopType, player);
         if (newButton != null) {
             // Check if we need to disable the button
             if (shopType != ShopType.CRAFTING) {

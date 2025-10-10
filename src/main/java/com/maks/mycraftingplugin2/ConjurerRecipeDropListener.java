@@ -25,13 +25,13 @@ public class ConjurerRecipeDropListener implements Listener {
     public void onMythicMobDeath(MythicMobDeathEvent event) {
         Entity killerEntity = event.getKiller();
         if (!(killerEntity instanceof Player)) {
-            Main.getInstance().getLogger().info("Mythic mob died without a player killer");
+            //Main.getInstance().getLogger().info("Mythic mob died without a player killer");
             return;
         }
         Player killer = (Player) killerEntity;
 
         String mobId = event.getMobType().getInternalName();
-        Main.getInstance().getLogger().info("Mythic mob killed: " + mobId);
+        //Main.getInstance().getLogger().info("Mythic mob killed: " + mobId);
 
         List<String> allowed = Main.getInstance().getConfig()
                 .getStringList("conjurer.mobs").stream()
@@ -39,26 +39,26 @@ public class ConjurerRecipeDropListener implements Listener {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
         boolean isAllowed = allowed.contains(mobId.toLowerCase(Locale.ROOT));
-        Main.getInstance().getLogger().info("Mob in conjurer list: " + isAllowed);
+        //Main.getInstance().getLogger().info("Mob in conjurer list: " + isAllowed);
         if (!isAllowed) return;
 
         double dropChance = Main.getInstance().getConfig().getDouble("conjurer.recipe_drop_chance", 0.001);
         double roll = random.nextDouble();
-        Main.getInstance().getLogger().info("Rolled " + roll + " against drop chance " + dropChance);
+        //Main.getInstance().getLogger().info("Rolled " + roll + " against drop chance " + dropChance);
         if (roll >= dropChance) {
-            Main.getInstance().getLogger().info("Roll failed; no recipe drop.");
+            //Main.getInstance().getLogger().info("Roll failed; no recipe drop.");
             return;
         }
 
-        Main.getInstance().getLogger().info("Roll succeeded; attempting recipe drop.");
+        //Main.getInstance().getLogger().info("Roll succeeded; attempting recipe drop.");
 
         UUID uuid = killer.getUniqueId();
         List<String> locked = ConjurerRecipeUnlockManager.getLockedRecipes(uuid);
         if (locked.isEmpty()) return;
 
         String recipe = locked.get(random.nextInt(locked.size()));
-        Main.getInstance().getLogger().info("Unlocking recipe " + recipe + " for player " + killer.getName());
+        //Main.getInstance().getLogger().info("Unlocking recipe " + recipe + " for player " + killer.getName());
         ConjurerRecipeUnlockManager.unlockRecipe(killer, recipe);
-        killer.sendMessage(ChatColor.AQUA + "You feel knowledge flow through you...");
+        //killer.sendMessage(ChatColor.AQUA + "You feel knowledge flow through you...");
     }
 }

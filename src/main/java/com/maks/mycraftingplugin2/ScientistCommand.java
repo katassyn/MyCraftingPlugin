@@ -6,11 +6,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-/**
- * /conjurer_shop - Opens the Conjurer main menu.
- */
-public class ConjurerShopCommand implements CommandExecutor {
-
+public class ScientistCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
@@ -19,11 +15,8 @@ public class ConjurerShopCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
-        if (player.getLevel() < 80) {
-            player.sendMessage(ChatColor.RED + "You must be at least level 80!");
-            return true;
-        }
-        ConjurerMainMenu.open(player);
+        // Open Scientist category (regular view)
+        CategoryMenu.open(player, "scientist", 0);
         return true;
     }
 }

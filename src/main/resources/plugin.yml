@@ -1,4 +1,4 @@
-name: MyCraftingPlugin2
+﻿name: MyCraftingPlugin2
 version: '${project.version}'
 main: com.maks.mycraftingplugin2.Main
 api-version: '1.20'
@@ -98,6 +98,38 @@ commands:
     description: "Opens the Conjurer menu in edit mode"
     usage: /edit_conjurer_shop
     permission: mycraftingplugin.editlayout
+  scientist:
+    description: "Opens the Scientist crafting category"
+    usage: /scientist
+    permission: mycraftingplugin.use
+  edit_scientist:
+    description: "Opens the Scientist category in edit mode"
+    usage: /edit_scientist
+    permission: mycraftingplugin.editlayout
+  grave_shop:
+    description: "Opens the grave shop crafting menu"
+    usage: /grave_shop
+    permission: mycraftingplugin.use
+  edit_grave_shop:
+    description: "Opens the grave shop crafting menu in edit mode"
+    usage: /edit_grave_shop
+    permission: mycraftingplugin.editlayout
+  dungeon_shop:
+    description: "Opens the dungeon shop crafting menu"
+    usage: /dungeon_shop
+    permission: mycraftingplugin.use
+  edit_dungeon_shop:
+    description: "Opens the dungeon shop crafting menu in edit mode"
+    usage: /edit_dungeon_shop
+    permission: mycraftingplugin.editlayout
+  zoo_keeper:
+    description: "Opens the zoo keeper crafting menu"
+    usage: /zoo_keeper
+    permission: mycraftingplugin.use
+  edit_zoo_keeper:
+    description: "Opens the zoo keeper crafting menu in edit mode"
+    usage: /edit_zoo_keeper
+    permission: mycraftingplugin.editlayout
   testjewels:
     description: Test jewel detection system
     usage: /<command> [help]
@@ -106,6 +138,21 @@ commands:
     description: Test pouch integration
     usage: /<command> [check|inventory]
     permission: mycraftingplugin.testpouch
+  imprinting:
+    description: "Opens the set imprinting interface"
+    usage: /imprinting
+    permission: mycraftingplugin.use
+    aliases: [imprint, setimprint]
+  set_crushing:
+    description: "Opens the set crushing interface"
+    usage: /set_crushing
+    permission: mycraftingplugin.use
+    aliases: [setcrush, crushset]
+  hefajsos:
+    description: "Opens Hefajsos services menu"
+    usage: /hefajsos
+    permission: mycraftingplugin.use
+    aliases: [hef, services]
 permissions:
   mycraftingplugin.use:
     description: Allows the player to use the crafting menu.

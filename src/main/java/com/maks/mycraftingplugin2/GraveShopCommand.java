@@ -7,9 +7,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * /conjurer_shop - Opens the Conjurer main menu.
+ * /grave_shop - Opens the grave shop crafting menu.
  */
-public class ConjurerShopCommand implements CommandExecutor {
+public class GraveShopCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -19,11 +19,8 @@ public class ConjurerShopCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
-        if (player.getLevel() < 80) {
-            player.sendMessage(ChatColor.RED + "You must be at least level 80!");
-            return true;
-        }
-        ConjurerMainMenu.open(player);
+        CategoryMenu.open(player, "grave_shop", 0);
+
         return true;
     }
 }
