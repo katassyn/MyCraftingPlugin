@@ -97,6 +97,9 @@ public class CategoryMenu {
     public static void openEditor(Player player, String category, int page) {
         Inventory inv = Bukkit.createInventory(null, 54, buildTitle(category, true));
 
+        TemporaryData.setLastCategory(player.getUniqueId(), category);
+        TemporaryData.setPage(player.getUniqueId(), category, page);
+
         // Wypełnij pustą przestrzeń białymi szybami
         fillWithGlass(inv);
 
