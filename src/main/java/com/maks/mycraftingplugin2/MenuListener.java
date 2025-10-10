@@ -120,6 +120,10 @@ public class MenuListener implements Listener {
         Inventory clickedInventory = event.getClickedInventory();
         Inventory topInventory = event.getView().getTopInventory();
         String title = event.getView().getTitle();
+        String plainTitle = ChatColor.stripColor(title);
+        if (plainTitle == null) {
+            plainTitle = title;
+        }
         Player player = (Player) event.getWhoClicked();
         ItemStack clickedItem = event.getCurrentItem();
 
@@ -151,89 +155,92 @@ public class MenuListener implements Listener {
         }
 
         // Handle different inventories based on the title
-        if (title.equals("Add New Recipe") || title.equals("Edit Recipe")) {
+        if (plainTitle.equals("Add New Recipe") || plainTitle.equals("Edit Recipe")) {
             handleAddEditRecipe(event, player, clickedItem, itemName, title);
-        } else if (title.equals("Crafting Categories")) {
+        } else if (plainTitle.equals("Crafting Categories")) {
             handleCraftingCategories(event, player, clickedItem, itemName);
-        } else if (title.equals("Upgrade Levels") || title.equals("Edit Upgrade Levels")) {
+        } else if (plainTitle.equals("Upgrade Levels") || plainTitle.equals("Edit Upgrade Levels")) {
             handleUpgradeLevels(event, player, clickedItem, itemName, title);
-        } else if (title.startsWith("Difficulty for ") || title.startsWith("Edit Difficulty for ")) {
+        } else if (plainTitle.startsWith("Difficulty for ") || plainTitle.startsWith("Edit Difficulty for ")) {
             handleDifficultyMenu(event, player, clickedItem, itemName, title);
-        } else if (title.startsWith("Category: ") || title.startsWith("Edit Category: ")) {
+        } else if (plainTitle.startsWith("Category: ")
+                || plainTitle.startsWith("Edit Category: ")
+                || plainTitle.startsWith("Category: mythology_t")
+                || plainTitle.startsWith("Edit Category: mythology_t")
+                || plainTitle.equals("Scientist Crafting Menu")
+                || plainTitle.equals("Edit Scientist Crafting")) {
             handleCategoryMenu(event, player, clickedItem, itemName, title);
-        } else if (title.equals("Edit Categories")) {
+        } else if (plainTitle.equals("Edit Categories")) {
             handleEditCategories(event, player, clickedItem, itemName);
-        } else if (title.equals("Crafting Scheme")) {
+        } else if (plainTitle.equals("Crafting Scheme")) {
             handleCraftingScheme(event, player, clickedItem, itemName);
-        } else if (title.equals("Alchemy Menu")) {
+        } else if (plainTitle.equals("Alchemy Menu")) {
             handleAlchemyMenuClick(player, itemName);
-        } else if (title.equals("Edit Alchemy Menu")) {
+        } else if (plainTitle.equals("Edit Alchemy Menu")) {
             handleEditAlchemyMenuClick(player, itemName);
-        } else if (title.equals("Jeweler Menu")) {
+        } else if (plainTitle.equals("Jeweler Menu")) {
             handleJewelerMenuClick(player, itemName);
-        } else if (title.equals("Edit Jeweler Menu")) {
+        } else if (plainTitle.equals("Edit Jeweler Menu")) {
             handleEditJewelerMenuClick(player, itemName);
-        } else if (title.equals("Jewels Crushing")) {
+        } else if (plainTitle.equals("Jewels Crushing")) {
             handleJewelsCrushingMenuClick(event, player, clickedItem, itemName);
-        } else if (title.equals("Gemologist Menu")) {
+        } else if (plainTitle.equals("Gemologist Menu")) {
             handleGemologistMenuClick(player, itemName);
-        } else if (title.equals("Edit Gemologist Menu")) {
+        } else if (plainTitle.equals("Edit Gemologist Menu")) {
             handleEditGemologistMenuClick(player, itemName);
-        } else if (title.equals("Gem Crushing")) {
+        } else if (plainTitle.equals("Gem Crushing")) {
             handleGemCrushingMenuClick(event, player, clickedItem, itemName);
-        } else if (title.equals("Runemaster Menu")) {
+        } else if (plainTitle.equals("Runemaster Menu")) {
             handleRunemasterMenuClick(player, itemName);
-        } else if (title.equals("Edit Runemaster Menu")) {
+        } else if (plainTitle.equals("Edit Runemaster Menu")) {
             handleEditRunemasterMenuClick(player, itemName);
-        } else if (title.equals("Conjurer Menu")) {
+        } else if (plainTitle.equals("Conjurer Menu")) {
             handleConjurerMenuClick(player, itemName);
-        } else if (title.equals("Edit Conjurer Menu")) {
+        } else if (plainTitle.equals("Edit Conjurer Menu")) {
             handleEditConjurerMenuClick(player, itemName);
-        } else if (title.equals("Dungeon Shop")) {
+        } else if (plainTitle.equals("Dungeon Shop")) {
             handleDungeonMainMenuClick(player, itemName);
-        } else if (title.equals("Edit Dungeon Shop")) {
+        } else if (plainTitle.equals("Edit Dungeon Shop")) {
             handleEditDungeonMainMenuClick(player, itemName);
-        } else if (title.startsWith("Mythology Dungeons - Tier Selection")) {
+        } else if (plainTitle.startsWith("Mythology Dungeons - Tier Selection")) {
             handleDungeonTierMenuClick(player, itemName);
-        } else if (title.startsWith("Edit Mythology Dungeons - Tier Selection")) {
+        } else if (plainTitle.startsWith("Edit Mythology Dungeons - Tier Selection")) {
             handleEditDungeonTierMenuClick(player, itemName);
-        } else if (title.startsWith("Category: mythology_t") || title.startsWith("Edit Category: mythology_t")) {
-            handleCategoryMenu(event, player, clickedItem, itemName, title);
-        } else if (title.equals("Select Required Recipe")) {
+        } else if (plainTitle.equals("Select Required Recipe")) {
             handleConjurerRecipeSelectMenu(event, player, clickedItem, itemName);
-        } else if (title.equals("Select Scientist Recipe")) {
+        } else if (plainTitle.equals("Select Scientist Recipe")) {
             handleScientistRecipeSelectMenu(event, player, clickedItem, itemName);
-        } else if (title.equals("Rune Crushing")) {
+        } else if (plainTitle.equals("Rune Crushing")) {
             handleRuneCrushingMenuClick(event, player, clickedItem, itemName);
-        } else if (title.equals("Set Crushing")) {
+        } else if (plainTitle.equals("Set Crushing")) {
             handleSetCrushingMenuClick(event, player, clickedItem, itemName);
-        } else if (title.equals("Emilia Shop")) {
+        } else if (plainTitle.equals("Emilia Shop")) {
             handleEmiliaMainMenu(player, clickedItem, itemName);
-        } else if (title.equals("Edit Emilia Shop")) {
+        } else if (plainTitle.equals("Edit Emilia Shop")) {
             handleEditEmiliaMainMenu(player, clickedItem, itemName);
-        } else if (title.equals("Emilia - Shop")) {
+        } else if (plainTitle.equals("Emilia - Shop")) {
             handleEmiliaShopMenu(player, clickedItem, itemName);
-        } else if (title.equals("Edit Emilia - Shop")) {
+        } else if (plainTitle.equals("Edit Emilia - Shop")) {
             handleEditEmiliaShopMenu(player, clickedItem, itemName);
-        } else if (title.equals("Emilia - Event Shop")) {
+        } else if (plainTitle.equals("Emilia - Event Shop")) {
             handleEmiliaEventShopMenu(player, clickedItem, itemName);
-        } else if (title.equals("Edit Emilia - Event Shop")) {
+        } else if (plainTitle.equals("Edit Emilia - Event Shop")) {
             handleEditEmiliaEventShopMenu(player, clickedItem, itemName);
-        } else if (title.startsWith("Emilia: Shop") || title.startsWith("Emilia: Event Shop")) {
+        } else if (plainTitle.startsWith("Emilia: Shop") || plainTitle.startsWith("Emilia: Event Shop")) {
             handleEmiliaItemsMenu(event, player, clickedItem, itemName, title);
-        } else if (title.startsWith("Edit Emilia: Shop") || title.startsWith("Edit Emilia: Event Shop")) {
+        } else if (plainTitle.startsWith("Edit Emilia: Shop") || plainTitle.startsWith("Edit Emilia: Event Shop")) {
             handleEditEmiliaItemsMenu(event, player, clickedItem, itemName, title);
-        } else if (title.equals("Add Emilia Item") || title.equals("Edit Emilia Item")) {
+        } else if (plainTitle.equals("Add Emilia Item") || plainTitle.equals("Edit Emilia Item")) {
             handleEmiliaAddEditItemMenu(event, player, clickedItem, itemName, title);
-        } else if (title.equals("Zumpe Shop")) {
+        } else if (plainTitle.equals("Zumpe Shop")) {
             handleZumpeShopMenu(event, player, clickedItem, itemName);
-        } else if (title.equals("Edit Zumpe Shop")) {
+        } else if (plainTitle.equals("Edit Zumpe Shop")) {
             handleEditZumpeShopMenu(event, player, clickedItem, itemName);
-        } else if (title.equals("Add Zumpe Item") || title.equals("Edit Zumpe Item")) {
+        } else if (plainTitle.equals("Add Zumpe Item") || plainTitle.equals("Edit Zumpe Item")) {
             handleZumpeAddEditItemMenu(event, player, clickedItem, itemName, title);
-        } else if (title.equals("Emilia Exchange")) {
+        } else if (plainTitle.equals("Emilia Exchange")) {
             handleEmiliaConfirmationMenu(event, player, clickedItem, itemName);
-        } else if (title.equals("Zumpe Exchange")) {
+        } else if (plainTitle.equals("Zumpe Exchange")) {
             handleZumpeConfirmationMenu(event, player, clickedItem, itemName);
         }
 
@@ -241,55 +248,58 @@ public class MenuListener implements Listener {
 
     // Method to check if the inventory title matches our plugin's inventories
     private boolean isOurPluginInventory(String title) {
-        return title.equals("Add New Recipe")
-                || title.equals("Edit Recipe")
-                || title.equals("Crafting Categories")
-                || title.equals("Upgrade Levels")
-                || title.startsWith("Difficulty for ")
-                || title.startsWith("Category: ")
-                || title.equals("Edit Categories")
-                || title.equals("Edit Upgrade Levels")
-                || title.startsWith("Edit Difficulty for ")
-                || title.startsWith("Edit Category: ")
-                || title.equals("Crafting Scheme")
-                || title.equals("Alchemy Menu")
-                || title.equals("Edit Alchemy Menu")
-                || title.equals("Jeweler Menu")
-                || title.equals("Edit Jeweler Menu")
-                || title.equals("Jewels Crushing")
-                || title.equals("Gemologist Menu")
-                || title.equals("Edit Gemologist Menu")
-                || title.equals("Gem Crushing")
-                || title.equals("Runemaster Menu")
-                || title.equals("Edit Runemaster Menu")
-                || title.equals("Rune Crushing")
-                || title.equals("Set Crushing")
-                || title.equals("Conjurer Menu")
-                || title.equals("Edit Conjurer Menu")
-                || title.equals("Select Required Recipe")
-                || title.equals("Select Scientist Recipe")
-                || title.equals("Emilia Shop")
-                || title.equals("Edit Emilia Shop")
-                || title.equals("Emilia - Shop")
-                || title.equals("Edit Emilia - Shop")
-                || title.equals("Emilia - Event Shop")
-                || title.equals("Edit Emilia - Event Shop")
-                || title.startsWith("Emilia: Shop")
-                || title.startsWith("Emilia: Event Shop")
-                || title.startsWith("Edit Emilia: Shop")
-                || title.startsWith("Edit Emilia: Event Shop")
-                || title.equals("Add Emilia Item")
-                || title.equals("Edit Emilia Item")
-                || title.equals("Zumpe Shop")
-                || title.equals("Edit Zumpe Shop")
-                || title.equals("Add Zumpe Item")
-                || title.equals("Edit Zumpe Item")
-                || title.equals("Emilia Exchange")
-                || title.equals("Zumpe Exchange")
-                || title.equals("Dungeon Shop")
-                || title.startsWith("Mythology Dungeons - Tier Selection")
-                || title.equals("Edit Dungeon Shop")
-                || title.startsWith("Edit Mythology Dungeons - Tier Selection");
+        String plainTitle = ChatColor.stripColor(title);
+        return plainTitle.equals("Add New Recipe")
+                || plainTitle.equals("Edit Recipe")
+                || plainTitle.equals("Crafting Categories")
+                || plainTitle.equals("Upgrade Levels")
+                || plainTitle.startsWith("Difficulty for ")
+                || plainTitle.startsWith("Category: ")
+                || plainTitle.equals("Scientist Crafting Menu")
+                || plainTitle.equals("Edit Scientist Crafting")
+                || plainTitle.equals("Edit Categories")
+                || plainTitle.equals("Edit Upgrade Levels")
+                || plainTitle.startsWith("Edit Difficulty for ")
+                || plainTitle.startsWith("Edit Category: ")
+                || plainTitle.equals("Crafting Scheme")
+                || plainTitle.equals("Alchemy Menu")
+                || plainTitle.equals("Edit Alchemy Menu")
+                || plainTitle.equals("Jeweler Menu")
+                || plainTitle.equals("Edit Jeweler Menu")
+                || plainTitle.equals("Jewels Crushing")
+                || plainTitle.equals("Gemologist Menu")
+                || plainTitle.equals("Edit Gemologist Menu")
+                || plainTitle.equals("Gem Crushing")
+                || plainTitle.equals("Runemaster Menu")
+                || plainTitle.equals("Edit Runemaster Menu")
+                || plainTitle.equals("Rune Crushing")
+                || plainTitle.equals("Set Crushing")
+                || plainTitle.equals("Conjurer Menu")
+                || plainTitle.equals("Edit Conjurer Menu")
+                || plainTitle.equals("Select Required Recipe")
+                || plainTitle.equals("Select Scientist Recipe")
+                || plainTitle.equals("Emilia Shop")
+                || plainTitle.equals("Edit Emilia Shop")
+                || plainTitle.equals("Emilia - Shop")
+                || plainTitle.equals("Edit Emilia - Shop")
+                || plainTitle.equals("Emilia - Event Shop")
+                || plainTitle.equals("Edit Emilia - Event Shop")
+                || plainTitle.startsWith("Emilia: Shop")
+                || plainTitle.startsWith("Emilia: Event Shop")
+                || plainTitle.startsWith("Edit Emilia: Shop")
+                || plainTitle.startsWith("Edit Emilia: Event Shop")
+                || plainTitle.equals("Add Emilia Item")
+                || plainTitle.equals("Edit Emilia Item")
+                || plainTitle.equals("Zumpe Shop")
+                || plainTitle.equals("Edit Zumpe Shop")
+                || plainTitle.equals("Add Zumpe Item")
+                || plainTitle.equals("Edit Zumpe Item")
+                || plainTitle.equals("Emilia Exchange")
+                || plainTitle.equals("Zumpe Exchange")
+                || plainTitle.equals("Dungeon Shop")
+                || plainTitle.startsWith("Mythology Dungeons - Tier Selection")
+                || plainTitle.equals("Edit Dungeon Shop")
+                || plainTitle.startsWith("Edit Mythology Dungeons - Tier Selection");
     }
     // Method to handle "Add New Recipe" and "Edit Recipe" inventories
 // Klasa: MenuListener
@@ -473,11 +483,30 @@ public class MenuListener implements Listener {
         boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
 
         if (itemName == null) return;
-        // Wydobywamy nazwÄ™ kategorii z tytuĹ‚u "Category: ..." lub "Edit Category: ..."
-        String category = title.contains(": ") ? title.split(": ")[1] : "";
 
-        // Sprawdzamy, czy jesteĹ›my w trybie edycji
-        boolean isEditMode = title.startsWith("Edit Category: ");
+        String plainTitle = ChatColor.stripColor(title);
+        String category = "";
+
+        if (plainTitle.startsWith("Category: ")) {
+            category = plainTitle.substring("Category: ".length());
+        } else if (plainTitle.startsWith("Edit Category: ")) {
+            category = plainTitle.substring("Edit Category: ".length());
+        } else if (plainTitle.equalsIgnoreCase("Scientist Crafting Menu")
+                || plainTitle.equalsIgnoreCase("Edit Scientist Crafting")) {
+            category = "scientist";
+        }
+
+        if (category.isEmpty()) {
+            category = TemporaryData.getLastCategory(player.getUniqueId());
+        }
+
+        if (category == null || category.isEmpty()) {
+            player.sendMessage(ChatColor.RED + "Unknown category.");
+            return;
+        }
+
+        boolean isEditMode = plainTitle.startsWith("Edit Category: ")
+                || plainTitle.equalsIgnoreCase("Edit Scientist Crafting");
 
         if (isTopInventory) {
             // W trybie edycji pozwalamy przenosiÄ‡ itemy w slotach 0â€“44 (layout).
@@ -686,8 +715,9 @@ public class MenuListener implements Listener {
 
             // Zapisujemy layout tylko w trybie edycji (po drobnej zwĹ‚oce)
             if (isEditMode) {
+                final String categoryForSaving = category;
                 Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
-                    saveCategoryLayout(inv, category);
+                    saveCategoryLayout(inv, categoryForSaving);
                 }, 1L);
             }
         } else {
