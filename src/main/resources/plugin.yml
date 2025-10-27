@@ -2,7 +2,7 @@
 version: '${project.version}'
 main: com.maks.mycraftingplugin2.Main
 api-version: '1.20'
-softdepend: [Vault, IngredientPouchPlugin, MythicMobs]
+softdepend: [Vault, IngredientPouchPlugin, MythicMobs, eventPlugin]
 commands:
   crafting:
     description: Opens the crafting menu.
@@ -81,6 +81,14 @@ commands:
   edit_emilia:
     description: "Opens Emilia's shop menu in edit mode"
     usage: /edit_emilia
+    permission: mycraftingplugin.editlayout
+  gnob:
+    description: "Opens Gnob's shop menu"
+    usage: /gnob
+    permission: mycraftingplugin.use
+  edit_gnob:
+    description: "Opens Gnob's shop menu in edit mode"
+    usage: /edit_gnob
     permission: mycraftingplugin.editlayout
   zumpe:
     description: "Opens Zumpe shop menu"

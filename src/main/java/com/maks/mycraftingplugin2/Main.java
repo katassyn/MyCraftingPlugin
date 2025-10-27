@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import com.maks.mycraftingplugin2.integration.PouchIntegrationHelper;
 import com.maks.mycraftingplugin2.integration.PouchItemMappings;
+import com.maks.mycraftingplugin2.integration.EventIntegrationHelper;
 
 public class Main extends JavaPlugin {
 
@@ -34,6 +35,9 @@ public class Main extends JavaPlugin {
         // Initialize Pouch integration
         initializePouchIntegration();
 
+        // Initialize Event integration
+        initializeEventIntegration();
+
         // Rejestracja komend
         getCommand("crafting").setExecutor(new CraftingCommand());
         getCommand("editcrafting").setExecutor(new EditCraftingCommand());
@@ -54,6 +58,8 @@ public class Main extends JavaPlugin {
         getCommand("runes_crushing").setExecutor(new RunesCrushingCommand());
         getCommand("emilia").setExecutor(new EmiliaCommand());
         getCommand("edit_emilia").setExecutor(new EditEmiliaCommand());
+        getCommand("gnob").setExecutor(new GnobCommand());
+        getCommand("edit_gnob").setExecutor(new EditGnobCommand());
         getCommand("zumpe").setExecutor(new ZumpeCommand());
         getCommand("edit_zumpe").setExecutor(new EditZumpeCommand());
         getCommand("testjewels").setExecutor(new TestJewelsCommand());
@@ -222,6 +228,42 @@ public class Main extends JavaPlugin {
                 statement.executeUpdate(createEmiliaItemsTable);
                 statement.executeUpdate(createEmiliaTransactionsTable);
 
+                // Create Gnob shop tables if they don't exist
+                String createGnobItemsTable = """
+                    CREATE TABLE IF NOT EXISTS gnob_items (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        category VARCHAR(255),
+                        slot INT,
+                        item TEXT,
+                        cost DOUBLE,
+                        daily_limit INT DEFAULT 0,
+                        required_item_1 TEXT,
+                        required_item_2 TEXT,
+                        required_item_3 TEXT,
+                        required_item_4 TEXT,
+                        required_item_5 TEXT,
+                        required_item_6 TEXT,
+                        required_item_7 TEXT,
+                        required_item_8 TEXT,
+                        required_item_9 TEXT,
+                        required_item_10 TEXT
+                    )
+                """;
+
+                String createGnobTransactionsTable = """
+                    CREATE TABLE IF NOT EXISTS gnob_transactions (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        player_uuid VARCHAR(36),
+                        item_id INT,
+                        transaction_date VARCHAR(10),
+                        transaction_time DATETIME,
+                        INDEX (player_uuid, item_id, transaction_date)
+                    )
+                """;
+
+                statement.executeUpdate(createGnobItemsTable);
+                statement.executeUpdate(createGnobTransactionsTable);
+
                 // Create Zumpe shop tables if they don't exist
                 String createZumpeItemsTable = """
                     CREATE TABLE IF NOT EXISTS zumpe_items (
@@ -284,6 +326,26 @@ public class Main extends JavaPlugin {
                 } catch (SQLException e) {
                     // Ignore if columns already exist
                     getLogger().info("Shop tables already have required items columns or update failed: " + e.getMessage());
+                }
+
+                // Add event_id column to Emilia and Gnob tables for event integration
+                String addEventIdToEmilia = """
+                    ALTER TABLE emilia_items
+                    ADD COLUMN IF NOT EXISTS event_id VARCHAR(255)
+                """;
+
+                String addEventIdToGnob = """
+                    ALTER TABLE gnob_items
+                    ADD COLUMN IF NOT EXISTS event_id VARCHAR(255)
+                """;
+
+                try {
+                    statement.executeUpdate(addEventIdToEmilia);
+                    statement.executeUpdate(addEventIdToGnob);
+                    getLogger().info("Successfully added event_id columns to shop tables!");
+                } catch (SQLException e) {
+                    // Ignore if columns already exist
+                    getLogger().info("Event integration columns already exist or update failed: " + e.getMessage());
                 }
 
                 getLogger().info("Successfully initialized database tables!");
@@ -350,6 +412,25 @@ public class Main extends JavaPlugin {
         } else {
             getLogger().info("IngredientPouchPlugin not found. Pouch integration disabled.");
             getLogger().info("Players will need items in their inventory for crafting.");
+        }
+    }
+
+    /**
+     * Initialize the event integration with eventPlugin
+     */
+    private void initializeEventIntegration() {
+        EventIntegrationHelper.initialize();
+
+        if (EventIntegrationHelper.isAvailable()) {
+            getLogger().info("Event integration successfully enabled!");
+            getLogger().info("Shop offers can now be linked to events from eventPlugin!");
+
+            // Log available events
+            int eventCount = EventIntegrationHelper.getAllEventIds().size();
+            getLogger().info("Found " + eventCount + " event(s) in eventPlugin configuration");
+        } else {
+            getLogger().info("eventPlugin not found. Event filtering disabled.");
+            getLogger().info("All shop offers will be visible regardless of event status.");
         }
     }
 }

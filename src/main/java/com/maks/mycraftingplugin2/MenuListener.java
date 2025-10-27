@@ -112,6 +112,19 @@ public class MenuListener implements Listener {
                 ZumpeAddItemMenu.removeGuiState(player.getUniqueId());
             }
         }
+
+        else if (title.equals("Add Gonb Item") || title.equals("Edit Gonb Item")) {
+            if (debuggingFlag == 1) {
+                Bukkit.getLogger().info("[MenuListener] Handling Gnob item menu close for: " + player.getName());
+            }
+
+            String state = ChatListener.getPlayerState(player.getUniqueId());
+            if ("entering_cost".equals(state) || "entering_gnob_daily_limit".equals(state)) {
+                GnobAddItemMenu.saveGuiState(player.getUniqueId(), event.getInventory().getContents());
+            } else {
+                GnobAddItemMenu.removeGuiState(player.getUniqueId());
+            }
+        }
     }
 
     @EventHandler
@@ -232,6 +245,16 @@ public class MenuListener implements Listener {
             handleEditEmiliaItemsMenu(event, player, clickedItem, itemName, title);
         } else if (plainTitle.equals("Add Emilia Item") || plainTitle.equals("Edit Emilia Item")) {
             handleEmiliaAddEditItemMenu(event, player, clickedItem, itemName, title);
+        } else if (plainTitle.equals("Select Event")) {
+            handleEventSelectMenu(event, player, clickedItem, itemName);
+        } else if (plainTitle.equals("Gonb")) {
+            handleGnobMainMenu(event, player, clickedItem, itemName);
+        } else if (plainTitle.equals("Edit Gonb")) {
+            handleEditGnobMainMenu(event, player, clickedItem, itemName);
+        } else if (plainTitle.equals("Add Gonb Item") || plainTitle.equals("Edit Gonb Item")) {
+            handleGnobAddEditItemMenu(event, player, clickedItem, itemName, title);
+        } else if (plainTitle.equals("Gonb Exchange")) {
+            handleGnobConfirmationMenu(event, player, clickedItem, itemName);
         } else if (plainTitle.equals("Zumpe Shop")) {
             handleZumpeShopMenu(event, player, clickedItem, itemName);
         } else if (plainTitle.equals("Edit Zumpe Shop")) {
@@ -290,6 +313,12 @@ public class MenuListener implements Listener {
                 || plainTitle.startsWith("Edit Emilia: Event Shop")
                 || plainTitle.equals("Add Emilia Item")
                 || plainTitle.equals("Edit Emilia Item")
+                || plainTitle.equals("Select Event")
+                || plainTitle.equals("Gonb")
+                || plainTitle.equals("Edit Gonb")
+                || plainTitle.equals("Add Gonb Item")
+                || plainTitle.equals("Edit Gonb Item")
+                || plainTitle.equals("Gonb Exchange")
                 || plainTitle.equals("Zumpe Shop")
                 || plainTitle.equals("Edit Zumpe Shop")
                 || plainTitle.equals("Add Zumpe Item")
@@ -2206,11 +2235,97 @@ public class MenuListener implements Listener {
         }
     }
 
+    private void handleEventSelectMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        event.setCancelled(true);
+        int slot = event.getRawSlot();
+        boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
+
+        if (!isTopInventory) return;
+
+        if (clickedItem == null || clickedItem.getType() == Material.BLACK_STAINED_GLASS_PANE) return;
+
+        // Back button
+        if (itemName != null && itemName.contains("Back")) {
+            // Restore previous GUI
+            if (EmiliaAddItemMenu.getCategory(player.getUniqueId()) != null) {
+                int editItemId = EmiliaAddItemMenu.getEditItemId(player.getUniqueId());
+                if (editItemId != -1) {
+                    EmiliaAddItemMenu.openEdit(player, editItemId);
+                } else {
+                    // Reopen add menu by getting shop type and tier from category
+                    String category = EmiliaAddItemMenu.getCategory(player.getUniqueId());
+                    if (category != null && category.startsWith("emilia_")) {
+                        // Parse category to get shop type and tier
+                        String[] parts = category.replace("emilia_", "").split("_");
+                        if (parts.length >= 3) {
+                            String shopType = parts[0] + " " + parts[1]; // e.g., "event shop"
+                            String tierType = parts[2]; // e.g., "basic"
+                            // Capitalize properly
+                            shopType = shopType.substring(0, 1).toUpperCase() + shopType.substring(1);
+                            tierType = tierType.substring(0, 1).toUpperCase() + tierType.substring(1);
+                            EmiliaAddItemMenu.open(player, shopType, tierType);
+                        }
+                    }
+                }
+            } else if (GnobAddItemMenu.getCategory(player.getUniqueId()) != null) {
+                int editItemId = GnobAddItemMenu.getEditItemId(player.getUniqueId());
+                if (editItemId != -1) {
+                    GnobAddItemMenu.openEdit(player, editItemId);
+                } else {
+                    GnobAddItemMenu.open(player);
+                }
+            }
+            return;
+        }
+
+        // Get selected event ID and name
+        String eventId = EventSelectMenu.getEventIdFromItem(clickedItem);
+        String eventName = EventSelectMenu.getEventNameFromItem(clickedItem);
+
+        if (eventName == null) return;
+
+        // Save event selection to TemporaryData
+        if (EmiliaAddItemMenu.getCategory(player.getUniqueId()) != null) {
+            TemporaryData.setPlayerData(player.getUniqueId(), "emilia_event_id", eventId);
+            player.sendMessage(ChatColor.GREEN + "Event set to: " + ChatColor.AQUA + eventName);
+
+            // Reopen add/edit menu
+            int editItemId = EmiliaAddItemMenu.getEditItemId(player.getUniqueId());
+            if (editItemId != -1) {
+                EmiliaAddItemMenu.openEdit(player, editItemId);
+            } else {
+                String category = EmiliaAddItemMenu.getCategory(player.getUniqueId());
+                if (category != null && category.startsWith("emilia_")) {
+                    String[] parts = category.replace("emilia_", "").split("_");
+                    if (parts.length >= 3) {
+                        String shopType = parts[0] + " " + parts[1];
+                        String tierType = parts[2];
+                        shopType = shopType.substring(0, 1).toUpperCase() + shopType.substring(1);
+                        tierType = tierType.substring(0, 1).toUpperCase() + tierType.substring(1);
+                        EmiliaAddItemMenu.open(player, shopType, tierType);
+                    }
+                }
+            }
+        } else if (GnobAddItemMenu.getCategory(player.getUniqueId()) != null) {
+            TemporaryData.setPlayerData(player.getUniqueId(), "gnob_event_id", eventId);
+            player.sendMessage(ChatColor.GREEN + "Event set to: " + ChatColor.AQUA + eventName);
+
+            // Reopen add/edit menu
+            int editItemId = GnobAddItemMenu.getEditItemId(player.getUniqueId());
+            if (editItemId != -1) {
+                GnobAddItemMenu.openEdit(player, editItemId);
+            } else {
+                GnobAddItemMenu.open(player);
+            }
+        }
+    }
+
     private void handleEmiliaAddEditItemMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
         Inventory inv = event.getInventory();
         int slot = event.getRawSlot();
         boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
-        boolean isEditMode = title.equals("Edit Emilia Item");
+        String plainTitle = ChatColor.stripColor(title);
+        boolean isEditMode = plainTitle.equals("Edit Emilia Item");
 
         if (isTopInventory) {
             // Allow placing items in slots 0-9 (required items) and slot 13 (result item)
@@ -2241,6 +2356,14 @@ public class MenuListener implements Listener {
                     player.closeInventory();
                     break;
 
+                case 12: // Event selection (only for Event Shop)
+                    String category = EmiliaAddItemMenu.getCategory(player.getUniqueId());
+                    if (category != null && category.contains("event_shop")) {
+                        EmiliaAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                        EventSelectMenu.open(player);
+                    }
+                    break;
+
                 case 15: // Daily Limit
                     EmiliaAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
                     ChatListener.setPlayerState(player.getUniqueId(), "entering_emilia_daily_limit");
@@ -2257,7 +2380,7 @@ public class MenuListener implements Listener {
                     break;
 
                 case 23: // Delete (only in edit mode)
-                    if (isEditMode && itemName.equals("Delete")) {
+                    if (isEditMode) {
                         deleteEmiliaItem(player);
                     }
                     break;
@@ -2307,12 +2430,18 @@ public class MenuListener implements Listener {
             dailyLimit = (Integer) limitObj;
         }
 
+        String eventId = null;
+        Object eventObj = TemporaryData.getPlayerData(player.getUniqueId(), "emilia_event_id");
+        if (eventObj instanceof String) {
+            eventId = (String) eventObj;
+        }
+
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement(
                      "INSERT INTO emilia_items (category, slot, required_item_1, required_item_2, required_item_3, " +
                      "required_item_4, required_item_5, required_item_6, required_item_7, required_item_8, " +
-                     "required_item_9, required_item_10, item, cost, daily_limit) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                     "required_item_9, required_item_10, item, cost, daily_limit, event_id) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
 
             ps.setString(1, category);
             ps.setInt(2, nextSlot);
@@ -2330,6 +2459,7 @@ public class MenuListener implements Listener {
             ps.setString(13, ItemStackSerializer.serialize(item));
             ps.setDouble(14, cost);
             ps.setInt(15, dailyLimit);
+            ps.setString(16, eventId);
 
             ps.executeUpdate();
             player.sendMessage(ChatColor.GREEN + "Item has been added to the shop.");
@@ -2337,6 +2467,7 @@ public class MenuListener implements Listener {
             // Clear temporary data
             TemporaryData.removeCost(player.getUniqueId());
             TemporaryData.removePlayerData(player.getUniqueId(), "emilia_daily_limit");
+            TemporaryData.removePlayerData(player.getUniqueId(), "emilia_event_id");
             EmiliaAddItemMenu.removeGuiState(player.getUniqueId());
 
             // Return to shop items menu
@@ -2368,12 +2499,18 @@ public class MenuListener implements Listener {
             dailyLimit = (Integer) limitObj;
         }
 
+        String eventId = null;
+        Object eventObj = TemporaryData.getPlayerData(player.getUniqueId(), "emilia_event_id");
+        if (eventObj instanceof String) {
+            eventId = (String) eventObj;
+        }
+
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement(
                      "UPDATE emilia_items SET required_item_1 = ?, required_item_2 = ?, required_item_3 = ?, " +
                      "required_item_4 = ?, required_item_5 = ?, required_item_6 = ?, required_item_7 = ?, " +
                      "required_item_8 = ?, required_item_9 = ?, required_item_10 = ?, " +
-                     "item = ?, cost = ?, daily_limit = ? WHERE id = ?")) {
+                     "item = ?, cost = ?, daily_limit = ?, event_id = ? WHERE id = ?")) {
 
             // Required items (slots 0-9)
             for (int i = 0; i < 10; i++) {
@@ -2388,7 +2525,8 @@ public class MenuListener implements Listener {
             ps.setString(11, ItemStackSerializer.serialize(item));
             ps.setDouble(12, cost);
             ps.setInt(13, dailyLimit);
-            ps.setInt(14, itemId);
+            ps.setString(14, eventId);
+            ps.setInt(15, itemId);
 
             int updated = ps.executeUpdate();
             if (updated > 0) {
@@ -2400,6 +2538,7 @@ public class MenuListener implements Listener {
             // Clear temporary data
             TemporaryData.removeCost(player.getUniqueId());
             TemporaryData.removePlayerData(player.getUniqueId(), "emilia_daily_limit");
+            TemporaryData.removePlayerData(player.getUniqueId(), "emilia_event_id");
             EmiliaAddItemMenu.removeGuiState(player.getUniqueId());
             EmiliaAddItemMenu.removeEditItemId(player.getUniqueId());
 
@@ -2852,6 +2991,412 @@ public class MenuListener implements Listener {
 
             // Refresh the menu to show updated limits
             UnifiedConfirmationMenu.refresh(player, itemId, UnifiedConfirmationMenu.ShopType.EMILIA);
+        }
+    }
+
+    // Gonb handlers - simplified version
+    private void handleGnobMainMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            // Close menu or go to main menu
+            player.closeInventory();
+            return;
+        }
+
+        if (itemName.equals("Next Page")) {
+            int currentPage = TemporaryData.getPage(player.getUniqueId(), "gonb");
+            GnobMainMenu.open(player, currentPage + 1);
+            return;
+        }
+
+        if (itemName.equals("Previous Page")) {
+            int currentPage = TemporaryData.getPage(player.getUniqueId(), "gonb");
+            if (currentPage > 0) {
+                GnobMainMenu.open(player, currentPage - 1);
+            }
+            return;
+        }
+
+        // Clicked on an item - open confirmation menu
+        if (clickedItem != null && clickedItem.getType() != Material.BLACK_STAINED_GLASS_PANE) {
+            ItemMeta meta = clickedItem.getItemMeta();
+            if (meta != null) {
+                NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_id");
+                if (meta.getPersistentDataContainer().has(key, PersistentDataType.INTEGER)) {
+                    int itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+                    GnobConfirmationMenu.open(player, itemId);
+                }
+            }
+        }
+    }
+
+    private void handleEditGnobMainMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            // Close menu or go to main menu
+            player.closeInventory();
+            return;
+        }
+
+        if (itemName.equals("Add Item")) {
+            GnobAddItemMenu.open(player);
+            return;
+        }
+
+        if (itemName.equals("Next Page")) {
+            int currentPage = TemporaryData.getPage(player.getUniqueId(), "gonb");
+            GnobMainMenu.openEditor(player, currentPage + 1);
+            return;
+        }
+
+        if (itemName.equals("Previous Page")) {
+            int currentPage = TemporaryData.getPage(player.getUniqueId(), "gonb");
+            if (currentPage > 0) {
+                GnobMainMenu.openEditor(player, currentPage - 1);
+            }
+            return;
+        }
+
+        // Clicked on an item - edit it
+        if (clickedItem != null && clickedItem.getType() != Material.BLACK_STAINED_GLASS_PANE) {
+            ItemMeta meta = clickedItem.getItemMeta();
+            if (meta != null) {
+                NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_id");
+                if (meta.getPersistentDataContainer().has(key, PersistentDataType.INTEGER)) {
+                    int itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+                    GnobAddItemMenu.openEdit(player, itemId);
+                }
+            }
+        }
+    }
+
+    private void handleGnobAddEditItemMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
+        Inventory inv = event.getInventory();
+        int slot = event.getRawSlot();
+        boolean isTopInventory = (event.getView().getTopInventory() == event.getClickedInventory());
+        String plainTitle = ChatColor.stripColor(title);
+        boolean isEditMode = plainTitle.equals("Edit Gonb Item");
+
+        if (isTopInventory) {
+            // Allow placing items in slots 0-9 (required items) and slot 13 (result item)
+            if ((slot >= 0 && slot <= 9) || slot == 13) {
+                // Handle placeholder removal
+                if (clickedItem != null && itemName != null) {
+                    Material mat = clickedItem.getType();
+                    if (mat == Material.GRAY_STAINED_GLASS_PANE || mat == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+                        // Remove placeholder
+                        inv.setItem(slot, null);
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+                // Allow item placement/removal
+                event.setCancelled(false);
+                return;
+            }
+
+            // Handle cost and daily limit buttons
+            if (itemName == null) return;
+
+            switch (slot) {
+                case 11: // Cost
+                    GnobAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                    ChatListener.setPlayerState(player.getUniqueId(), "entering_cost");
+                    player.sendMessage(ChatColor.YELLOW + "Please enter the cost (e.g. 500, 500k, 1m).");
+                    player.closeInventory();
+                    break;
+
+                case 12: // Event selection (Gnob has event support for all offers)
+                    GnobAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                    EventSelectMenu.open(player);
+                    break;
+
+                case 15: // Daily Limit
+                    GnobAddItemMenu.saveGuiState(player.getUniqueId(), inv.getContents());
+                    ChatListener.setPlayerState(player.getUniqueId(), "entering_gnob_daily_limit");
+                    player.sendMessage(ChatColor.YELLOW + "Please enter the daily limit (0 = no limit).");
+                    player.closeInventory();
+                    break;
+
+                case 22: // Save
+                    if (isEditMode) {
+                        updateGnobItem(player, inv);
+                    } else {
+                        saveGnobItem(player, inv);
+                    }
+                    break;
+
+                case 23: // Delete (only in edit mode)
+                    if (isEditMode) {
+                        deleteGnobItem(player);
+                    }
+                    break;
+
+                case 24: // Back
+                    goBackFromGnobAdd(player);
+                    break;
+
+                default:
+                    event.setCancelled(true);
+                    break;
+            }
+        } else {
+            // Bottom inventory (player inventory)
+            event.setCancelled(false);
+        }
+    }
+
+    private void saveGnobItem(Player player, Inventory inv) {
+        String category = GnobAddItemMenu.getCategory(player.getUniqueId());
+        if (category == null) {
+            player.sendMessage(ChatColor.RED + "Category not found.");
+            return;
+        }
+
+        ItemStack item = inv.getItem(13);
+        if (item == null || item.getType() == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+            player.sendMessage(ChatColor.RED + "You must set an item!");
+            return;
+        }
+
+        // Get next available slot
+        int nextSlot = 0;
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT MAX(slot) FROM gnob_items WHERE category = ?")) {
+            ps.setString(1, category);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next() && rs.getObject(1) != null) {
+                nextSlot = rs.getInt(1) + 1;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error determining slot position.");
+            return;
+        }
+
+        double cost = TemporaryData.getCost(player.getUniqueId());
+        int dailyLimit = 0;
+        Object limitObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_daily_limit");
+        if (limitObj instanceof Integer) {
+            dailyLimit = (Integer) limitObj;
+        }
+
+        String eventId = null;
+        Object eventObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_event_id");
+        if (eventObj instanceof String) {
+            eventId = (String) eventObj;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO gnob_items (category, slot, required_item_1, required_item_2, required_item_3, " +
+                     "required_item_4, required_item_5, required_item_6, required_item_7, required_item_8, " +
+                     "required_item_9, required_item_10, item, cost, daily_limit, event_id) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+
+            ps.setString(1, category);
+            ps.setInt(2, nextSlot);
+
+            // Required items (slots 0-9)
+            for (int i = 0; i < 10; i++) {
+                ItemStack requiredItem = inv.getItem(i);
+                if (requiredItem != null && requiredItem.getType() != Material.GRAY_STAINED_GLASS_PANE) {
+                    ps.setString(i + 3, ItemStackSerializer.serialize(requiredItem));
+                } else {
+                    ps.setString(i + 3, null);
+                }
+            }
+
+            ps.setString(13, ItemStackSerializer.serialize(item));
+            ps.setDouble(14, cost);
+            ps.setInt(15, dailyLimit);
+            ps.setString(16, eventId);
+
+            ps.executeUpdate();
+            player.sendMessage(ChatColor.GREEN + "Item has been added to the shop.");
+
+            // Clear temporary data
+            TemporaryData.removeCost(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "gnob_daily_limit");
+            TemporaryData.removePlayerData(player.getUniqueId(), "gnob_event_id");
+            GnobAddItemMenu.removeCategory(player.getUniqueId());
+            GnobAddItemMenu.removeGuiState(player.getUniqueId());
+
+            // Go back to items menu
+            goBackFromGnobAdd(player);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error saving item to database.");
+        }
+    }
+
+    private void updateGnobItem(Player player, Inventory inv) {
+        int itemId = GnobAddItemMenu.getEditItemId(player.getUniqueId());
+        if (itemId == -1) {
+            player.sendMessage(ChatColor.RED + "Item ID not found.");
+            return;
+        }
+
+        ItemStack item = inv.getItem(13);
+        if (item == null || item.getType() == Material.LIGHT_BLUE_STAINED_GLASS_PANE) {
+            player.sendMessage(ChatColor.RED + "You must set an item!");
+            return;
+        }
+
+        double cost = TemporaryData.getCost(player.getUniqueId());
+        int dailyLimit = 0;
+        Object limitObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_daily_limit");
+        if (limitObj instanceof Integer) {
+            dailyLimit = (Integer) limitObj;
+        }
+
+        String eventId = null;
+        Object eventObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_event_id");
+        if (eventObj instanceof String) {
+            eventId = (String) eventObj;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE gnob_items SET required_item_1 = ?, required_item_2 = ?, required_item_3 = ?, " +
+                     "required_item_4 = ?, required_item_5 = ?, required_item_6 = ?, required_item_7 = ?, " +
+                     "required_item_8 = ?, required_item_9 = ?, required_item_10 = ?, " +
+                     "item = ?, cost = ?, daily_limit = ?, event_id = ? WHERE id = ?")) {
+
+            // Required items (slots 0-9)
+            for (int i = 0; i < 10; i++) {
+                ItemStack requiredItem = inv.getItem(i);
+                if (requiredItem != null && requiredItem.getType() != Material.GRAY_STAINED_GLASS_PANE) {
+                    ps.setString(i + 1, ItemStackSerializer.serialize(requiredItem));
+                } else {
+                    ps.setString(i + 1, null);
+                }
+            }
+
+            ps.setString(11, ItemStackSerializer.serialize(item));
+            ps.setDouble(12, cost);
+            ps.setInt(13, dailyLimit);
+            ps.setString(14, eventId);
+            ps.setInt(15, itemId);
+
+            int updated = ps.executeUpdate();
+            if (updated > 0) {
+                player.sendMessage(ChatColor.GREEN + "Item has been updated.");
+            } else {
+                player.sendMessage(ChatColor.RED + "Item not found in database.");
+            }
+
+            // Clear temporary data
+            TemporaryData.removeCost(player.getUniqueId());
+            TemporaryData.removePlayerData(player.getUniqueId(), "gnob_daily_limit");
+            TemporaryData.removePlayerData(player.getUniqueId(), "gnob_event_id");
+            GnobAddItemMenu.removeCategory(player.getUniqueId());
+            GnobAddItemMenu.removeGuiState(player.getUniqueId());
+            GnobAddItemMenu.removeEditItemId(player.getUniqueId());
+
+            // Go back to items menu
+            goBackFromGnobAdd(player);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error updating item in database.");
+        }
+    }
+
+    private void deleteGnobItem(Player player) {
+        int itemId = GnobAddItemMenu.getEditItemId(player.getUniqueId());
+        if (itemId == -1) {
+            player.sendMessage(ChatColor.RED + "Item ID not found.");
+            return;
+        }
+
+        try (Connection conn = Main.getConnection();
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM gnob_items WHERE id = ?")) {
+
+            ps.setInt(1, itemId);
+            int deleted = ps.executeUpdate();
+
+            if (deleted > 0) {
+                player.sendMessage(ChatColor.GREEN + "Item has been deleted from the shop.");
+
+                // Clear temporary data
+                TemporaryData.removeCost(player.getUniqueId());
+                TemporaryData.removePlayerData(player.getUniqueId(), "gnob_daily_limit");
+                GnobAddItemMenu.removeCategory(player.getUniqueId());
+                GnobAddItemMenu.removeEditItemId(player.getUniqueId());
+
+                // Go back to items menu
+                goBackFromGnobAdd(player);
+            } else {
+                player.sendMessage(ChatColor.RED + "Item not found in database.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(ChatColor.RED + "Error deleting item from database.");
+        }
+    }
+
+    private void goBackFromGnobAdd(Player player) {
+        int currentPage = TemporaryData.getPage(player.getUniqueId(), "gonb");
+        GnobMainMenu.openEditor(player, currentPage);
+    }
+
+    private void handleGnobConfirmationMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            // Return to main Gonb menu
+            int currentPage = TemporaryData.getPage(player.getUniqueId(), "gonb");
+            GnobMainMenu.open(player, currentPage);
+        } else if (itemName.equals("Exchange") || itemName.equals("Craft")) { // Handle both button types
+            // Perform exchange
+            performGnobExchangeImproved(player, event.getInventory());
+        }
+    }
+
+    private void performGnobExchangeImproved(Player player, Inventory inv) {
+        ItemStack resultItem = inv.getItem(22);
+        if (resultItem == null || resultItem.getType() == Material.AIR) {
+            player.sendMessage(ChatColor.RED + "Invalid item.");
+            return;
+        }
+
+        ItemMeta meta = resultItem.getItemMeta();
+        if (meta == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), "gnob_item_id");
+        Integer itemId = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
+
+        if (itemId == null) {
+            player.sendMessage(ChatColor.RED + "Item not found.");
+            return;
+        }
+
+        // Debug mode
+        if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+            Bukkit.getLogger().info("[MenuListener] Starting Gnob exchange for player: " + player.getName() +
+                                  ", itemId: " + itemId);
+            TransactionManager.testDailyLimit(player, itemId, "gnob");
+        }
+
+        // Process the purchase
+        boolean success = GnobTransactionManager.processPurchase(player, itemId);
+
+        // Debug message instead of closing inventory
+        if (success) {
+            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                Bukkit.getLogger().info("[Gnob] Exchange success - keeping menu open");
+            }
+
+            // Refresh the menu to show updated limits
+            GnobConfirmationMenu.open(player, itemId);
         }
     }
 

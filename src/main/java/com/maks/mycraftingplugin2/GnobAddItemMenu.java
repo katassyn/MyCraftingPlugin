@@ -13,24 +13,24 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * Menu for adding or editing items in Emilia shop.
+ * Menu for adding or editing items in Gnob shop.
  */
-public class EmiliaAddItemMenu {
+public class GnobAddItemMenu {
 
     private static Map<UUID, String> playerCategories = new HashMap<>();
     private static Map<UUID, ItemStack[]> guiStates = new HashMap<>();
     private static Map<UUID, Integer> editItemIds = new HashMap<>();
 
     /**
-     * Opens the menu to add a new item to Emilia's shop.
+     * Opens the menu to add a new item to Gonb shop.
      */
-    public static void open(Player player, String shopType, String tierType) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Add Emilia Item");
+    public static void open(Player player) {
+        Inventory inv = Bukkit.createInventory(null, 27, "Add Gonb Item");
 
         // Fill with glass
         fillWithGlass(inv);
 
-        String category = "emilia_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
+        String category = "gonb";
 
         // Check if there's a saved GUI state
         if (guiStates.containsKey(player.getUniqueId())) {
@@ -57,18 +57,16 @@ public class EmiliaAddItemMenu {
             ));
             TemporaryData.setCost(player.getUniqueId(), 0.0);
 
-            // Event selection (12) - only for Event Shop categories
-            if (shopType.equalsIgnoreCase("Event Shop")) {
-                // Check if event_id is already set in TemporaryData (from EventSelectMenu)
-                Object tempEventObj = TemporaryData.getPlayerData(player.getUniqueId(), "emilia_event_id");
-                String eventId = null;
-                if (tempEventObj instanceof String) {
-                    eventId = (String) tempEventObj;
-                }
-                inv.setItem(12, createEventInfoItem(eventId));
-                if (tempEventObj == null) {
-                    TemporaryData.setPlayerData(player.getUniqueId(), "emilia_event_id", null);
-                }
+            // Event selection (12) - Gnob has event support for all offers
+            // Check if event_id is already set in TemporaryData (from EventSelectMenu)
+            Object tempEventObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_event_id");
+            String eventId = null;
+            if (tempEventObj instanceof String) {
+                eventId = (String) tempEventObj;
+            }
+            inv.setItem(12, createEventInfoItem(eventId));
+            if (tempEventObj == null) {
+                TemporaryData.setPlayerData(player.getUniqueId(), "gnob_event_id", null);
             }
 
             // Daily Limit (15)
@@ -76,7 +74,7 @@ public class EmiliaAddItemMenu {
                     "Daily Limit",
                     "0"
             ));
-            TemporaryData.setPlayerData(player.getUniqueId(), "emilia_daily_limit", 0);
+            TemporaryData.setPlayerData(player.getUniqueId(), "gnob_daily_limit", 0);
 
             // Save button (22)
             inv.setItem(22, createMenuItem(
@@ -99,7 +97,7 @@ public class EmiliaAddItemMenu {
      * Opens the menu to edit an existing item.
      */
     public static void openEdit(Player player, int itemId) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Edit Emilia Item");
+        Inventory inv = Bukkit.createInventory(null, 27, "Edit Gonb Item");
 
         // Fill with glass
         fillWithGlass(inv);
@@ -109,7 +107,7 @@ public class EmiliaAddItemMenu {
 
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "SELECT * FROM emilia_items WHERE id = ?")) {
+                     "SELECT * FROM gnob_items WHERE id = ?")) {
 
             ps.setInt(1, itemId);
             ResultSet rs = ps.executeQuery();
@@ -146,18 +144,16 @@ public class EmiliaAddItemMenu {
                 ));
                 TemporaryData.setCost(player.getUniqueId(), cost);
 
-                // Event selection (12) - only for Event Shop categories
-                if (category.contains("event_shop")) {
-                    // Check if event_id is already set in TemporaryData (from EventSelectMenu)
-                    Object tempEventObj = TemporaryData.getPlayerData(player.getUniqueId(), "emilia_event_id");
-                    String finalEventId = eventId;
-                    if (tempEventObj instanceof String) {
-                        finalEventId = (String) tempEventObj;
-                    }
-                    inv.setItem(12, createEventInfoItem(finalEventId));
-                    if (tempEventObj == null) {
-                        TemporaryData.setPlayerData(player.getUniqueId(), "emilia_event_id", eventId);
-                    }
+                // Event selection (12) - Gnob has event support for all offers
+                // Check if event_id is already set in TemporaryData (from EventSelectMenu)
+                Object tempEventObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_event_id");
+                String finalEventId = eventId;
+                if (tempEventObj instanceof String) {
+                    finalEventId = (String) tempEventObj;
+                }
+                inv.setItem(12, createEventInfoItem(finalEventId));
+                if (tempEventObj == null) {
+                    TemporaryData.setPlayerData(player.getUniqueId(), "gnob_event_id", eventId);
                 }
 
                 // Daily Limit
@@ -165,7 +161,7 @@ public class EmiliaAddItemMenu {
                         "Daily Limit",
                         String.valueOf(dailyLimit)
                 ));
-                TemporaryData.setPlayerData(player.getUniqueId(), "emilia_daily_limit", dailyLimit);
+                TemporaryData.setPlayerData(player.getUniqueId(), "gnob_daily_limit", dailyLimit);
 
                 // Save button
                 inv.setItem(22, createMenuItem(

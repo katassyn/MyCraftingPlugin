@@ -116,6 +116,20 @@ public class ChatListener implements Listener {
                     }
                     removePlayerState(uuid);
                     reopenZumpeMenu(player);
+                } else if (state.equals("entering_gnob_daily_limit")) {
+                    try {
+                        int dailyLimit = Integer.parseInt(message.trim());
+                        if (dailyLimit < 0) {
+                            player.sendMessage(ChatColor.RED + "Daily limit cannot be negative. Please enter a valid number.");
+                        } else {
+                            TemporaryData.setPlayerData(uuid, "gnob_daily_limit", dailyLimit);
+                            player.sendMessage(ChatColor.GREEN + "Daily limit set to " + dailyLimit + ".");
+                        }
+                    } catch (NumberFormatException e) {
+                        player.sendMessage(ChatColor.RED + "Invalid input. Please enter a valid number.");
+                    }
+                    removePlayerState(uuid);
+                    reopenGnobMenu(player);
                 }
             });
         }
@@ -253,5 +267,22 @@ public class ChatListener implements Listener {
 
         // If adding a new item
         ZumpeAddItemMenu.open(player);
+    }
+
+    private void reopenGnobMenu(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        // Check if editing an existing item
+        int itemId = GnobAddItemMenu.getEditItemId(uuid);
+        if (itemId != -1) {
+            GnobAddItemMenu.openEdit(player, itemId);
+            return;
+        }
+
+        // Check if adding a new item
+        String category = GnobAddItemMenu.getCategory(uuid);
+        if (category != null) {
+            GnobAddItemMenu.open(player);
+        }
     }
 }

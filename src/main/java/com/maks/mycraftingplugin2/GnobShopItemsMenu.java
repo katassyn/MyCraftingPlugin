@@ -1,6 +1,5 @@
 package com.maks.mycraftingplugin2;
 
-import com.maks.mycraftingplugin2.integration.EventIntegrationHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -15,9 +14,9 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * Menu to display and handle shop items for Emilia's shop.
+ * Menu to display and handle shop items for Gnob's shop.
  */
-public class EmiliaShopItemsMenu {
+public class GnobShopItemsMenu {
     private static final int ITEMS_PER_PAGE = 45; // Slots 0-44 for items
 
     /**
@@ -28,15 +27,15 @@ public class EmiliaShopItemsMenu {
      * @param page The page number to display.
      */
     public static void open(Player player, String shopType, String tierType, int page) {
-        String category = "emilia_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
-        Inventory inv = Bukkit.createInventory(null, 54, "Emilia: " + shopType + " - " + tierType);
+        String category = "gnob_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
+        Inventory inv = Bukkit.createInventory(null, 54, "Gnob: " + shopType + " - " + tierType);
 
         // Fill with background glass
         fillWithGlass(inv);
 
         // Get items from database
         try (Connection conn = Main.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT * FROM emilia_items WHERE category = ? ORDER BY slot ASC")) {
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM gnob_items WHERE category = ? ORDER BY slot ASC")) {
 
             ps.setString(1, category);
             ResultSet rs = ps.executeQuery();
@@ -51,14 +50,6 @@ public class EmiliaShopItemsMenu {
                 int itemId = rs.getInt("id");
                 int dailyLimit = rs.getInt("daily_limit");
                 double cost = rs.getDouble("cost");
-                String eventId = rs.getString("event_id");
-
-                // Filter by event status for players (not in edit mode)
-                if (eventId != null && !eventId.isEmpty()) {
-                    if (!EventIntegrationHelper.isEventActive(eventId)) {
-                        continue; // Skip this item if its event is not active
-                    }
-                }
 
                 // Store item ID in PersistentDataContainer
                 ItemMeta meta = resultItem.getItemMeta();
@@ -73,9 +64,9 @@ public class EmiliaShopItemsMenu {
 
                     // Add daily limit info
                     if (dailyLimit > 0) {
-                        int usedToday = EmiliaTransactionManager.getTransactionCount(player.getUniqueId(), itemId);
+                        int usedToday = GnobTransactionManager.getTransactionCount(player.getUniqueId(), itemId);
                         int remainingUses = dailyLimit - usedToday;
-                        lore.add(ChatColor.GRAY + "Daily Limit: " + ChatColor.YELLOW + 
+                        lore.add(ChatColor.GRAY + "Daily Limit: " + ChatColor.YELLOW +
                                  remainingUses + "/" + dailyLimit);
 
                         // Optionally add color in depending on remaining uses
@@ -120,8 +111,8 @@ public class EmiliaShopItemsMenu {
         inv.setItem(49, createMenuItem(Material.BARRIER, ChatColor.RED + "Back"));
 
         // Save data for navigation
-        TemporaryData.setPlayerData(player.getUniqueId(), "emilia_shop_type", shopType);
-        TemporaryData.setPlayerData(player.getUniqueId(), "emilia_tier_type", tierType);
+        TemporaryData.setPlayerData(player.getUniqueId(), "gnob_shop_type", shopType);
+        TemporaryData.setPlayerData(player.getUniqueId(), "gnob_tier_type", tierType);
         TemporaryData.setPage(player.getUniqueId(), category, page);
 
         player.openInventory(inv);
@@ -131,15 +122,15 @@ public class EmiliaShopItemsMenu {
      * Opens the shop items menu in editor mode.
      */
     public static void openEditor(Player player, String shopType, String tierType, int page) {
-        String category = "emilia_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
-        Inventory inv = Bukkit.createInventory(null, 54, "Edit Emilia: " + shopType + " - " + tierType);
+        String category = "gnob_" + shopType.toLowerCase().replace(" ", "_") + "_" + tierType.toLowerCase();
+        Inventory inv = Bukkit.createInventory(null, 54, "Edit Gnob: " + shopType + " - " + tierType);
 
         // Fill with background glass
         fillWithGlass(inv);
 
         // Get items from database
         try (Connection conn = Main.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT * FROM emilia_items WHERE category = ? ORDER BY slot ASC")) {
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM gnob_items WHERE category = ? ORDER BY slot ASC")) {
 
             ps.setString(1, category);
             ResultSet rs = ps.executeQuery();
@@ -152,9 +143,7 @@ public class EmiliaShopItemsMenu {
                 int itemId = rs.getInt("id");
                 int dailyLimit = rs.getInt("daily_limit");
                 double cost = rs.getDouble("cost");
-                String eventId = rs.getString("event_id");
 
-                // Show all items in edit mode, with event info in lore
                 // Store item ID and other data
                 ItemMeta meta = resultItem.getItemMeta();
                 if (meta != null) {
@@ -165,16 +154,6 @@ public class EmiliaShopItemsMenu {
                     lore.add(ChatColor.GRAY + "Cost: " + ChatColor.GOLD + formatCost(cost));
                     lore.add(ChatColor.GRAY + "Daily Limit: " + ChatColor.YELLOW + dailyLimit);
                     lore.add(ChatColor.GRAY + "ID: " + ChatColor.WHITE + itemId);
-
-                    // Add event info in editor mode
-                    if (eventId == null || eventId.isEmpty()) {
-                        lore.add(ChatColor.AQUA + "Event: " + ChatColor.GREEN + "Always Active");
-                    } else {
-                        String eventName = EventIntegrationHelper.getEventName(eventId);
-                        boolean active = EventIntegrationHelper.isEventActive(eventId);
-                        lore.add(ChatColor.AQUA + "Event: " + ChatColor.WHITE + eventName +
-                                (active ? ChatColor.GREEN + " (ON)" : ChatColor.RED + " (OFF)"));
-                    }
 
                     meta.setLore(lore);
                     resultItem.setItemMeta(meta);
@@ -213,8 +192,8 @@ public class EmiliaShopItemsMenu {
         }
 
         // Save data for navigation
-        TemporaryData.setPlayerData(player.getUniqueId(), "emilia_shop_type", shopType);
-        TemporaryData.setPlayerData(player.getUniqueId(), "emilia_tier_type", tierType);
+        TemporaryData.setPlayerData(player.getUniqueId(), "gnob_shop_type", shopType);
+        TemporaryData.setPlayerData(player.getUniqueId(), "gnob_tier_type", tierType);
         TemporaryData.setPage(player.getUniqueId(), category, page);
 
         player.openInventory(inv);
