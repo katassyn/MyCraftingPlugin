@@ -226,19 +226,74 @@ public class PouchItemMappings {
         itemMappings.put("[ III ] Mortrix Sacrificial Bones", "mortis_frag_III");
         itemMappings.put("Anderium", "andermant");
         // CURRENCY category items
+        itemMappings.put("Fragment of Infernal Passage", "ips");
+        itemMappings.put("Blood Vial", "blood_vial");
+        itemMappings.put("Joker", "joker");
         itemMappings.put("DrakenMelon", "draken");
         itemMappings.put("Glided Sunflower", "clover");
         itemMappings.put("Andermant", "andermant");
+        itemMappings.put("Anderium", "andermant");
         itemMappings.put("Lockpick", "lockpick");
         itemMappings.put("Jewel Dust", "jewel_dust");
         itemMappings.put("Shiny Dust", "shiny_dust");
         itemMappings.put("Rune Dust", "rune_dust");
         itemMappings.put("Crystal", "crystal");
-        
+        itemMappings.put("Biologist Potion", "pota_biola");
+        itemMappings.put("New Moon Parchment", "new_moon_scrol");
+        itemMappings.put("Fairy Wood", "witch_wood");
+        itemMappings.put("Snow Flakes", "snow_flakes");
+
         // Imprinting crystals
         itemMappings.put("Essence Crystal", "essence_crystal");
         itemMappings.put("Power Crystal", "power_crystal");
         itemMappings.put("Primordial Soul Crystal", "primordial_soul_crystal");
+
+        // ========== DEMON TOWER ITEMS ==========
+        // Demon Ash
+        itemMappings.put("[ I ] Demonic Ash", "demon_ash_I");
+        itemMappings.put("[ II ] Demonic Ash", "demon_ash_II");
+        itemMappings.put("[ III ] Demonic Ash", "demon_ash_III");
+        itemMappings.put("[ IV ] Demonic Ash", "demon_ash_IV");
+
+        // Cursed Cloth
+        itemMappings.put("[ I ] Cursed Cloth", "cursed_cloth_I");
+        itemMappings.put("[ II ] Cursed Cloth", "cursed_cloth_II");
+        itemMappings.put("[ III ] Cursed Cloth", "cursed_cloth_III");
+        itemMappings.put("[ IV ] Cursed Cloth", "cursed_cloth_IV");
+
+        // Demon Head
+        itemMappings.put("[ I ] Demon Head", "demon_head_I");
+        itemMappings.put("[ II ] Demon Head", "demon_head_II");
+        itemMappings.put("[ III ] Demon Head", "demon_head_III");
+        itemMappings.put("[ IV ] Demon Head", "demon_head_IV");
+
+        // Raven Feather
+        itemMappings.put("[ I ] Raven Feather", "raven_feather_I");
+        itemMappings.put("[ II ] Raven Feather", "raven_feather_II");
+        itemMappings.put("[ III ] Raven Feather", "raven_feather_III");
+        itemMappings.put("[ IV ] Raven Feather", "raven_feather_IV");
+
+        // Chaos Artifact
+        itemMappings.put("[ I ] Chaos Artifact", "chaos_artifact_I");
+        itemMappings.put("[ II ] Chaos Artifact", "chaos_artifact_II");
+        itemMappings.put("[ III ] Chaos Artifact", "chaos_artifact_III");
+        itemMappings.put("[ IV ] Chaos Artifact", "chaos_artifact_IV");
+
+        // Mechanic Specific Items
+        itemMappings.put("[ I ] Corrupted Steel Scrap", "blacksmith_scrap");
+        itemMappings.put("[ II ] Smelter Magma", "smelter_coal");
+        itemMappings.put("[ III ] Divine Droplet", "divine_droplet");
+        itemMappings.put("[ IV ] Crucible Flux", "crucible_flux");
+
+        // Boss Unique Items
+        itemMappings.put("[ I ] Valgroth`s Dark Sigil", "valgroth_sigil");
+        itemMappings.put("[ II ] Azhra`Morth`s Scepter", "azhramorth_scepter");
+        itemMappings.put("[ III ] Korthamoth`s Void Eye", "korthamoth_eye");
+        itemMappings.put("[ IV ] Vhar`Zhul`s Ripper Blade", "vharzhul_blade");
+        itemMappings.put("[ IV ] Acheron`s Shadow Core", "acheron_core");
+
+        // Corrupted Smithing Stone
+        itemMappings.put("Corrupted Smithing Stone", "smith_stone");
     }
 
     /**

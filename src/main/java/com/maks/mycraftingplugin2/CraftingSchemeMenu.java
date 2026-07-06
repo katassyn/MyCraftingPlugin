@@ -1,5 +1,6 @@
 package com.maks.mycraftingplugin2;
 
+import com.maks.mycraftingplugin2.integration.PouchIntegrationHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -17,13 +18,18 @@ import java.text.DecimalFormat;
 public class CraftingSchemeMenu {
 
     public static void open(Player player, ItemStack displayItem, int recipeId) {
-        Inventory inv = Bukkit.createInventory(null, 45, "Crafting Scheme");
+        String title = "Crafting Scheme";
+        String lastCategory = TemporaryData.getLastCategory(player.getUniqueId());
+        if (lastCategory != null && lastCategory.equalsIgnoreCase("petos")) {
+            title = "Present Eater";
+        }
+        Inventory inv = Bukkit.createInventory(null, 45, title);
 
         // Fill inventory with glass panes
         fillWithGlass(inv);
 
         // Set required items in the appropriate slots
-        setRequiredItems(inv, recipeId);
+        setRequiredItems(inv, recipeId, player);
 
         // Set the result item in the center slot (slot 22)
         ItemStack resultItem = getResultItem(recipeId);
@@ -43,7 +49,7 @@ public class CraftingSchemeMenu {
         player.openInventory(inv);
     }
 
-    private static void setRequiredItems(Inventory inv, int recipeId) {
+    private static void setRequiredItems(Inventory inv, int recipeId, Player player) {
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement("SELECT * FROM recipes WHERE id = ?")) {
 
@@ -55,6 +61,25 @@ public class CraftingSchemeMenu {
                         String itemData = rs.getString("required_item_" + (i + 1));
                         if (itemData != null) {
                             ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
+
+                            // Add "Owned: X / required" line to lore
+                            if (requiredItem != null) {
+                                int required = PouchIntegrationHelper.getActualItemAmount(requiredItem);
+                                int owned = PouchIntegrationHelper.getTotalItemAmount(player, requiredItem);
+
+                                ItemMeta meta = requiredItem.getItemMeta();
+                                if (meta != null) {
+                                    List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+
+                                    // Determine color based on whether player has enough
+                                    ChatColor color = owned >= required ? ChatColor.GREEN : ChatColor.RED;
+                                    lore.add(color + "Owned: " + owned + " / " + required);
+
+                                    meta.setLore(lore);
+                                    requiredItem.setItemMeta(meta);
+                                }
+                            }
+
                             // Set the required item in the appropriate slot
                             inv.setItem(10 + i, requiredItem);
                         }

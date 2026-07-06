@@ -161,6 +161,32 @@ commands:
     usage: /hefajsos
     permission: mycraftingplugin.use
     aliases: [hef, services]
+  special_jeweler:
+    description: "Opens the special jeweler crafting menu"
+    usage: /special_jeweler
+    permission: mycraftingplugin.use
+    aliases: [sjeweler, specialjew]
+  edit_special_jeweler:
+    description: "Opens the special jeweler menu in edit mode"
+    usage: /edit_special_jeweler
+    permission: mycraftingplugin.editlayout
+  seasonal_trader:
+    description: "Opens the seasonal trader crafting menu"
+    usage: /seasonal_trader
+    permission: mycraftingplugin.use
+    aliases: [seasons, trader, seasonal]
+  edit_seasonal_trader:
+    description: "Opens the seasonal trader menu in edit mode"
+    usage: /edit_seasonal_trader
+    permission: mycraftingplugin.editlayout
+  petos:
+    description: "Opens the Present Eater menu"
+    usage: /petos
+    permission: mycraftingplugin.use
+  edit_petos:
+    description: "Opens the PETOS category editor"
+    usage: /edit_petos
+    permission: mycraftingplugin.editlayout
 permissions:
   mycraftingplugin.use:
     description: Allows the player to use the crafting menu.

@@ -1,5 +1,6 @@
 package com.maks.mycraftingplugin2;
 
+import com.maks.mycraftingplugin2.integration.PouchIntegrationHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -53,7 +54,7 @@ public class UnifiedConfirmationMenu {
         fillWithGlass(inv);
 
         // Set required items
-        setRequiredItems(inv, itemId, shopType);
+        setRequiredItems(inv, itemId, shopType, player);
 
         // Set result item (center slot 22)
         ItemStack resultItem = getResultItem(itemId, shopType);
@@ -73,7 +74,7 @@ public class UnifiedConfirmationMenu {
         player.openInventory(inv);
     }
 
-    private static void setRequiredItems(Inventory inv, int itemId, ShopType shopType) {
+    private static void setRequiredItems(Inventory inv, int itemId, ShopType shopType, Player player) {
         String query = "";
 
         switch (shopType) {
@@ -99,6 +100,25 @@ public class UnifiedConfirmationMenu {
                         String itemData = rs.getString("required_item_" + (i + 1));
                         if (itemData != null) {
                             ItemStack requiredItem = ItemStackSerializer.deserialize(itemData);
+
+                            // Add "Owned: X / required" line to lore
+                            if (requiredItem != null) {
+                                int required = PouchIntegrationHelper.getActualItemAmount(requiredItem);
+                                int owned = PouchIntegrationHelper.getTotalItemAmount(player, requiredItem);
+
+                                ItemMeta meta = requiredItem.getItemMeta();
+                                if (meta != null) {
+                                    List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+
+                                    // Determine color based on whether player has enough
+                                    ChatColor color = owned >= required ? ChatColor.GREEN : ChatColor.RED;
+                                    lore.add(color + "Owned: " + owned + " / " + required);
+
+                                    meta.setLore(lore);
+                                    requiredItem.setItemMeta(meta);
+                                }
+                            }
+
                             inv.setItem(10 + i, requiredItem);
 
                             if (isDebugEnabled()) {

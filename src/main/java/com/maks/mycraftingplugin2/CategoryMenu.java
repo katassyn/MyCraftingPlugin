@@ -196,10 +196,16 @@ public class CategoryMenu {
     }
 
     private static String buildTitle(String category, boolean edit) {
-        if (category != null && category.equalsIgnoreCase("scientist")) {
-            return edit
-                    ? ChatColor.DARK_PURPLE + "Edit Scientist Crafting"
-                    : ChatColor.DARK_PURPLE + "Scientist Crafting Menu";
+        if (category != null) {
+            if (category.equalsIgnoreCase("scientist")) {
+                return edit
+                        ? ChatColor.DARK_PURPLE + "Edit Scientist Crafting"
+                        : ChatColor.DARK_PURPLE + "Scientist Crafting Menu";
+            }
+            if (category.equalsIgnoreCase("petos")) {
+                String name = "Present Eater";
+                return edit ? "Edit Category: " + name : "Category: " + name;
+            }
         }
         return (edit ? "Edit Category: " : "Category: ") + category;
     }

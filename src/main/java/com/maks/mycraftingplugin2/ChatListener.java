@@ -233,6 +233,17 @@ public class ChatListener implements Listener {
             return;
         }
 
+        // Sprawdzamy, czy to Gnob (po edycji lub kategorii)
+        String gnobCategory = GnobAddItemMenu.getCategory(uuid);
+        int gnobItemId = GnobAddItemMenu.getEditItemId(uuid);
+        if (gnobCategory != null || gnobItemId != -1) {
+            if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
+                Bukkit.getLogger().info("[ChatListener] Detected Gnob context");
+            }
+            reopenGnobMenu(player);
+            return;
+        }
+
         // Sprawdzamy, czy to Zumpe - POPRAWKA: sprawdź też czy jest zapisany stan GUI
         int zumpeItemId = ZumpeAddItemMenu.getEditItemId(uuid);
         ItemStack[] zumpeGuiState = ZumpeAddItemMenu.getGuiState(uuid); // Dodaj getter w ZumpeAddItemMenu

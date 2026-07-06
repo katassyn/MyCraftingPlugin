@@ -11,7 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class UpgradeMenu {
 
     public static void open(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Upgrade Levels");
+        Inventory inv = Bukkit.createInventory(null, 36, "Upgrade Levels");
 
         // Wypełnij pozostałe sloty szkłem
         fillWithGlass(inv);
@@ -27,8 +27,11 @@ public class UpgradeMenu {
         inv.setItem(20, createMenuItem(Material.PAPER, ChatColor.GREEN + "q9"));
         inv.setItem(21, createMenuItem(Material.PAPER, ChatColor.GREEN + "q10"));
 
+        // Demon Tower option
+        inv.setItem(25, createMenuItem(Material.BLAZE_ROD, ChatColor.DARK_RED + "Demon Tower"));
+
         // Przycisk "Back"
-        inv.setItem(22, createMenuItem(Material.BARRIER, ChatColor.RED + "Back"));
+        inv.setItem(31, createMenuItem(Material.BARRIER, ChatColor.RED + "Back"));
 
         player.openInventory(inv);
     }
@@ -58,7 +61,7 @@ public class UpgradeMenu {
     }
 
     public static void openEditor(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Edit Upgrade Levels");
+        Inventory inv = Bukkit.createInventory(null, 36, "Edit Upgrade Levels");
 
         // Wypełnij pozostałe sloty szkłem
         fillWithGlass(inv);
@@ -74,8 +77,11 @@ public class UpgradeMenu {
         inv.setItem(20, createMenuItem(Material.PAPER, ChatColor.GREEN + "q9"));
         inv.setItem(21, createMenuItem(Material.PAPER, ChatColor.GREEN + "q10"));
 
+        // Demon Tower option
+        inv.setItem(25, createMenuItem(Material.BLAZE_ROD, ChatColor.DARK_RED + "Demon Tower"));
+
         // Przycisk "Back"
-        inv.setItem(22, createMenuItem(Material.BARRIER, ChatColor.RED + "Back"));
+        inv.setItem(31, createMenuItem(Material.BARRIER, ChatColor.RED + "Back"));
 
         player.openInventory(inv);
     }

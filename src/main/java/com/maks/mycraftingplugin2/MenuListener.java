@@ -176,6 +176,8 @@ public class MenuListener implements Listener {
             handleUpgradeLevels(event, player, clickedItem, itemName, title);
         } else if (plainTitle.startsWith("Difficulty for ") || plainTitle.startsWith("Edit Difficulty for ")) {
             handleDifficultyMenu(event, player, clickedItem, itemName, title);
+        } else if (plainTitle.equals("Demon Tower") || plainTitle.equals("Edit Demon Tower")) {
+            handleDemonTowerMenu(event, player, clickedItem, itemName, title);
         } else if (plainTitle.startsWith("Category: ")
                 || plainTitle.startsWith("Edit Category: ")
                 || plainTitle.startsWith("Category: mythology_t")
@@ -185,7 +187,7 @@ public class MenuListener implements Listener {
             handleCategoryMenu(event, player, clickedItem, itemName, title);
         } else if (plainTitle.equals("Edit Categories")) {
             handleEditCategories(event, player, clickedItem, itemName);
-        } else if (plainTitle.equals("Crafting Scheme")) {
+        } else if (plainTitle.equals("Crafting Scheme") || plainTitle.equals("Present Eater")) {
             handleCraftingScheme(event, player, clickedItem, itemName);
         } else if (plainTitle.equals("Alchemy Menu")) {
             handleAlchemyMenuClick(player, itemName);
@@ -265,6 +267,10 @@ public class MenuListener implements Listener {
             handleEmiliaConfirmationMenu(event, player, clickedItem, itemName);
         } else if (plainTitle.equals("Zumpe Exchange")) {
             handleZumpeConfirmationMenu(event, player, clickedItem, itemName);
+        } else if (plainTitle.equals("Seasonal Trader Menu")) {
+            handleSeasonalTraderMenuClick(player, itemName);
+        } else if (plainTitle.equals("Edit Seasonal Trader Menu")) {
+            handleEditSeasonalTraderMenuClick(player, itemName);
         }
 
     }
@@ -277,6 +283,8 @@ public class MenuListener implements Listener {
                 || plainTitle.equals("Crafting Categories")
                 || plainTitle.equals("Upgrade Levels")
                 || plainTitle.startsWith("Difficulty for ")
+                || plainTitle.equals("Demon Tower")
+                || plainTitle.equals("Edit Demon Tower")
                 || plainTitle.startsWith("Category: ")
                 || plainTitle.equals("Scientist Crafting Menu")
                 || plainTitle.equals("Edit Scientist Crafting")
@@ -285,6 +293,7 @@ public class MenuListener implements Listener {
                 || plainTitle.startsWith("Edit Difficulty for ")
                 || plainTitle.startsWith("Edit Category: ")
                 || plainTitle.equals("Crafting Scheme")
+                || plainTitle.equals("Present Eater")
                 || plainTitle.equals("Alchemy Menu")
                 || plainTitle.equals("Edit Alchemy Menu")
                 || plainTitle.equals("Jeweler Menu")
@@ -328,7 +337,11 @@ public class MenuListener implements Listener {
                 || plainTitle.equals("Dungeon Shop")
                 || plainTitle.startsWith("Mythology Dungeons - Tier Selection")
                 || plainTitle.equals("Edit Dungeon Shop")
-                || plainTitle.startsWith("Edit Mythology Dungeons - Tier Selection");
+                || plainTitle.startsWith("Edit Mythology Dungeons - Tier Selection")
+                || plainTitle.equals("Special Jeweler")
+                || plainTitle.equals("Edit Special Jeweler")
+                || plainTitle.equals("Seasonal Trader Menu")
+                || plainTitle.equals("Edit Seasonal Trader Menu");
     }
     // Method to handle "Add New Recipe" and "Edit Recipe" inventories
 // Klasa: MenuListener
@@ -468,6 +481,12 @@ public class MenuListener implements Listener {
             } else if (title.equals("Edit Upgrade Levels")) {
                 MainMenu.openEditor(player);
             }
+        } else if (itemName.equals("Demon Tower")) {
+            if (title.equals("Upgrade Levels")) {
+                DemonTowerMenu.open(player);
+            } else if (title.equals("Edit Upgrade Levels")) {
+                DemonTowerMenu.openEditor(player);
+            }
         } else if (itemName.startsWith("q")) {
             if (title.equals("Upgrade Levels")) {
                 DifficultyMenu.open(player, itemName); // itemName is "q1" to "q10"
@@ -503,6 +522,51 @@ public class MenuListener implements Listener {
             }
         }
     }
+
+    // Method to handle "Demon Tower" menu
+    private void handleDemonTowerMenu(InventoryClickEvent event, Player player, ItemStack clickedItem, String itemName, String title) {
+        if (itemName == null) return;
+
+        if (itemName.equals("Back")) {
+            if (title.equals("Demon Tower")) {
+                UpgradeMenu.open(player);
+            } else if (title.equals("Edit Demon Tower")) {
+                UpgradeMenu.openEditor(player);
+            }
+        } else if (itemName.equals("I Floor") || itemName.equals("II Floor") || itemName.equals("III Floor") || itemName.equals("IV Floor")) {
+            // Map floor name to category
+            String floorNumber;
+            switch (itemName) {
+                case "I Floor":
+                    floorNumber = "1";
+                    break;
+                case "II Floor":
+                    floorNumber = "2";
+                    break;
+                case "III Floor":
+                    floorNumber = "3";
+                    break;
+                case "IV Floor":
+                    floorNumber = "4";
+                    break;
+                default:
+                    return;
+            }
+
+            String category = "demon_tower_" + floorNumber;
+
+            // Store last category for the player
+            TemporaryData.setLastCategory(player.getUniqueId(), category);
+
+            // Open category menu
+            if (title.equals("Demon Tower")) {
+                CategoryMenu.open(player, category, 0);
+            } else if (title.equals("Edit Demon Tower")) {
+                CategoryMenu.openEditor(player, category, 0);
+            }
+        }
+    }
+
     // Klasa: MenuListener
 // Fragment kodu z metodÄ… handleCategoryMenu
     private void handleCategoryMenu(InventoryClickEvent event, Player player,
@@ -527,6 +591,10 @@ public class MenuListener implements Listener {
 
         if (category.isEmpty()) {
             category = TemporaryData.getLastCategory(player.getUniqueId());
+        }
+        // Map display name back to internal category key for PETOS
+        if (category != null && category.equalsIgnoreCase("Present Eater")) {
+            category = "petos";
         }
 
         if (category == null || category.isEmpty()) {
@@ -566,6 +634,14 @@ public class MenuListener implements Listener {
                         DifficultyMenu.open(player, qLevel);
                     }
                 }
+                // Demon Tower categories (demon_tower_1, demon_tower_2, etc.)
+                else if (category.startsWith("demon_tower_")) {
+                    if (isEditMode) {
+                        DemonTowerMenu.openEditor(player);
+                    } else {
+                        DemonTowerMenu.open(player);
+                    }
+                }
                 // JeĹĽeli to kategoria Jewelera
                 else if (category.equalsIgnoreCase("jewels_upgrading")) {
                     if (isEditMode) {
@@ -597,6 +673,11 @@ public class MenuListener implements Listener {
                     } else {
                         ConjurerMainMenu.open(player);
                     }
+                }
+                // Jeżeli to kategoria Special Jeweler
+                else if (category.equalsIgnoreCase("special_jeweler")) {
+                    SpecialJewelerGUI gui = new SpecialJewelerGUI(player, isEditMode);
+                    player.openInventory(gui.getInventory());
                 }
                 // Jeżeli to kategoria Scientist
                 else if (category.equalsIgnoreCase("scientist")) {
@@ -656,6 +737,18 @@ public class MenuListener implements Listener {
                 // JeĹĽeli to kategoria mythology tier (mythology_t1, mythology_t2, etc.)
                 else if (category.startsWith("mythology_t")) {
                     DungeonTierMenu.open(player, "Mythology Dungeons");
+                }
+                // Jeżeli to kategoria Seasonal Trader
+                else if (category.equalsIgnoreCase("seasonal_spring")
+                        || category.equalsIgnoreCase("seasonal_summer")
+                        || category.equalsIgnoreCase("seasonal_autumn")
+                        || category.equalsIgnoreCase("seasonal_winter")) {
+
+                    if (isEditMode) {
+                        SeasonalTraderMainMenu.openEditor(player);
+                    } else {
+                        SeasonalTraderMainMenu.open(player);
+                    }
                 }
 
                 // Inne kategorie (keys, lootboxes, itd.)
@@ -1070,18 +1163,27 @@ public class MenuListener implements Listener {
                         }
 
                         // Return the first item (required_item_1) to player on craft failure
-                        // Always return if pet effect triggers, otherwise normal behavior
+                        // Always return if pet effect triggers or if category is special_jeweler
                         String firstItemData = rs.getString("required_item_1");
-                        if (firstItemData != null && shouldRefund) {
+                        if (firstItemData != null && (shouldRefund || category.equalsIgnoreCase("special_jeweler"))) {
                             ItemStack firstItem = ItemStackSerializer.deserialize(firstItemData);
                             if (firstItem != null) {
                                 player.getInventory().addItem(firstItem);
-                                player.sendMessage(ChatColor.YELLOW + "Returned: " +
-                                    PouchIntegrationHelper.getItemName(firstItem) + " x" +
-                                    PouchIntegrationHelper.getActualItemAmount(firstItem));
+
+                                // Different message for special_jeweler vs pet effect
+                                if (category.equalsIgnoreCase("special_jeweler")) {
+                                    player.sendMessage(ChatColor.YELLOW + "First ingredient returned: " +
+                                        PouchIntegrationHelper.getItemName(firstItem) + " x" +
+                                        PouchIntegrationHelper.getActualItemAmount(firstItem));
+                                } else {
+                                    player.sendMessage(ChatColor.YELLOW + "Returned: " +
+                                        PouchIntegrationHelper.getItemName(firstItem) + " x" +
+                                        PouchIntegrationHelper.getActualItemAmount(firstItem));
+                                }
 
                                 if (Main.getInstance().getConfig().getInt("debug", 0) == 1) {
-                                    Bukkit.getLogger().info("[Crafting] Pet effect refunded first item on failure: " +
+                                    String reason = category.equalsIgnoreCase("special_jeweler") ? "special_jeweler category" : "pet effect";
+                                    Bukkit.getLogger().info("[Crafting] " + reason + " refunded first item on failure: " +
                                         PouchIntegrationHelper.getItemName(firstItem) + " x" +
                                         PouchIntegrationHelper.getActualItemAmount(firstItem));
                                 }
@@ -3588,6 +3690,48 @@ public class MenuListener implements Listener {
                     .invoke(null, player, text);
         } catch (Exception e) {
             return text; // Return original text if PlaceholderAPI is not available
+        }
+    }
+
+    private void handleSeasonalTraderMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Spring":
+                CategoryMenu.open(player, "seasonal_spring", 0);
+                break;
+            case "Summer":
+                CategoryMenu.open(player, "seasonal_summer", 0);
+                break;
+            case "Autumn":
+                CategoryMenu.open(player, "seasonal_autumn", 0);
+                break;
+            case "Winter":
+                CategoryMenu.open(player, "seasonal_winter", 0);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleEditSeasonalTraderMenuClick(Player player, String itemName) {
+        if (itemName == null) return;
+
+        switch (itemName) {
+            case "Spring":
+                CategoryMenu.openEditor(player, "seasonal_spring", 0);
+                break;
+            case "Summer":
+                CategoryMenu.openEditor(player, "seasonal_summer", 0);
+                break;
+            case "Autumn":
+                CategoryMenu.openEditor(player, "seasonal_autumn", 0);
+                break;
+            case "Winter":
+                CategoryMenu.openEditor(player, "seasonal_winter", 0);
+                break;
+            default:
+                break;
         }
     }
 }

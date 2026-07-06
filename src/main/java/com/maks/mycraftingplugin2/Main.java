@@ -77,6 +77,12 @@ public class Main extends JavaPlugin {
         getCommand("imprinting").setExecutor(new ImprintingCommand());
         getCommand("set_crushing").setExecutor(new SetCrushingCommand());
         getCommand("hefajsos").setExecutor(new HefajsosCommand());
+        getCommand("special_jeweler").setExecutor(new SpecialJewelerCommand());
+        getCommand("edit_special_jeweler").setExecutor(new EditSpecialJewelerCommand());
+        getCommand("seasonal_trader").setExecutor(new SeasonalTraderCommand());
+        getCommand("edit_seasonal_trader").setExecutor(new EditSeasonalTraderCommand());
+        getCommand("petos").setExecutor(new PetosCommand());
+        getCommand("edit_petos").setExecutor(new EditPetosCommand());
 
         // Rejestracja listenerĂłw
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
@@ -85,6 +91,7 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ImprintingListener(), this);
         getServer().getPluginManager().registerEvents(new HefajsosListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(), this);
+        getServer().getPluginManager().registerEvents(new SpecialJewelerListener(), this);
 
         // Schedule daily transaction cleanup at midnight
         setupTransactionCleanupTask();

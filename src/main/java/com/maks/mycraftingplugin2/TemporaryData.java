@@ -35,6 +35,13 @@ public class TemporaryData {
         return null;
     }
 
+    public static boolean hasPlayerData(UUID uuid, String key) {
+        if (playerData.containsKey(uuid)) {
+            return playerData.get(uuid).containsKey(key);
+        }
+        return false;
+    }
+
     public static void removePlayerData(UUID uuid, String key) {
         if (playerData.containsKey(uuid)) {
             playerData.get(uuid).remove(key);

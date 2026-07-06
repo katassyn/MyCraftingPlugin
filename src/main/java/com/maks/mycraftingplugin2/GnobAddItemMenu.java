@@ -25,6 +25,8 @@ public class GnobAddItemMenu {
      * Opens the menu to add a new item to Gonb shop.
      */
     public static void open(Player player) {
+        // Ensure we are adding a new item, not editing a previous one
+        removeEditItemId(player.getUniqueId());
         Inventory inv = Bukkit.createInventory(null, 27, "Add Gonb Item");
 
         // Fill with glass
@@ -35,6 +37,26 @@ public class GnobAddItemMenu {
         // Check if there's a saved GUI state
         if (guiStates.containsKey(player.getUniqueId())) {
             inv.setContents(guiStates.get(player.getUniqueId()));
+
+            // Update event selection item (slot 12) with current TemporaryData value
+            Object tempEventObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_event_id");
+            String eventId = null;
+            if (tempEventObj instanceof String) {
+                eventId = (String) tempEventObj;
+            }
+            inv.setItem(12, createEventInfoItem(eventId));
+
+            // Update daily limit display (slot 15) with current TemporaryData value (if present)
+            Object tempLimitObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_daily_limit");
+            if (tempLimitObj instanceof Integer) {
+                inv.setItem(15, createInfoItem(
+                        "Daily Limit",
+                        String.valueOf((Integer) tempLimitObj)
+                ));
+            }
+
+            // Consume GUI state once restored to avoid stale reuse
+            removeGuiState(player.getUniqueId());
         } else {
             // Required items (slots 0-9)
             for (int i = 0; i < 10; i++) {
@@ -105,6 +127,32 @@ public class GnobAddItemMenu {
         // Store item ID for editing
         editItemIds.put(player.getUniqueId(), itemId);
 
+        UUID uuid = player.getUniqueId();
+        // If we have a saved GUI state (coming back from chat/event selection), restore it and overlay temp values
+        if (guiStates.containsKey(uuid)) {
+            inv.setContents(guiStates.get(uuid));
+
+            // Overlay Event (slot 12)
+            Object tempEventObj = TemporaryData.getPlayerData(uuid, "gnob_event_id");
+            String finalEventId = tempEventObj instanceof String ? (String) tempEventObj : null;
+            inv.setItem(12, createEventInfoItem(finalEventId));
+
+            // Overlay Daily Limit (slot 15) if present
+            Object tempLimitObj = TemporaryData.getPlayerData(uuid, "gnob_daily_limit");
+            if (tempLimitObj instanceof Integer) {
+                inv.setItem(15, createInfoItem(
+                        "Daily Limit",
+                        String.valueOf((Integer) tempLimitObj)
+                ));
+            }
+
+            // Consume GUI state after restoration to avoid stale reuse
+            removeGuiState(uuid);
+
+            player.openInventory(inv);
+            return;
+        }
+
         try (Connection conn = Main.getConnection();
              PreparedStatement ps = conn.prepareStatement(
                      "SELECT * FROM gnob_items WHERE id = ?")) {
@@ -146,13 +194,14 @@ public class GnobAddItemMenu {
 
                 // Event selection (12) - Gnob has event support for all offers
                 // Check if event_id is already set in TemporaryData (from EventSelectMenu)
-                Object tempEventObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_event_id");
-                String finalEventId = eventId;
-                if (tempEventObj instanceof String) {
-                    finalEventId = (String) tempEventObj;
-                }
-                inv.setItem(12, createEventInfoItem(finalEventId));
-                if (tempEventObj == null) {
+                if (TemporaryData.hasPlayerData(player.getUniqueId(), "gnob_event_id")) {
+                    // Use value from TemporaryData (already selected in EventSelectMenu)
+                    Object tempEventObj = TemporaryData.getPlayerData(player.getUniqueId(), "gnob_event_id");
+                    String finalEventId = tempEventObj instanceof String ? (String) tempEventObj : null;
+                    inv.setItem(12, createEventInfoItem(finalEventId));
+                } else {
+                    // Use value from database and set it in TemporaryData
+                    inv.setItem(12, createEventInfoItem(eventId));
                     TemporaryData.setPlayerData(player.getUniqueId(), "gnob_event_id", eventId);
                 }
 
